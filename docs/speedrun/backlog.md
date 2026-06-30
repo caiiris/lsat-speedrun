@@ -1,0 +1,227 @@
+# Speedrun — Backlog (bugs · refactors · issues)
+
+> One file for bugs, refactors, and non-decision open questions, distinguished by
+> `type`. Status updates in place; closed items are marked done with a verdict,
+> never deleted. Companions: [`AGENTS.md`](./AGENTS.md), [`decisions.md`](./decisions.md),
+> the specs (`spec-*.md`).
+>
+> **IDs:** `B001…`, monotonic, never reused. **Status keys:** open · in-progress ·
+> fixed · done · wontfix · known-gap · duplicate · false-positive. **Severity:**
+> critical · high · medium · low.
+>
+> Note: undecided *design forks* live in the decision log as `Status: open` (e.g.
+> the AI feature roster, D-SR14), **not** here. This file is for non-decision
+> issues, debt, and known gaps.
+
+## Summary (2026-06-30)
+
+| Status | IDs |
+|---|---|
+| open | B001, B002, B005, B006, B007, B008, B012, B013, B014, B017, B019, B020 |
+| known-gap | B003, B004, B011, B015, B016, B018 |
+| fixed / done | B009, B010 |
+
+---
+
+### B001 — AnkiDroid build must rebuild the shared Rust backend for Android
+
+- **Type:** issue · **Status:** open · **Severity:** high
+- **Discovered:** 2026-06-30 by Opus during iris-plan (spec-sync-mobile)
+- **Ref:** [`spec-sync-mobile.md`](./spec-sync-mobile.md) §9; D-SR7
+- **Context:** the engine change ships to the phone *only* after the Speedrun `rslib`
+  is built into the AnkiDroid backend library and the fork builds on a device. The
+  assignment explicitly warns teams that leave the mobile build late don't finish.
+- **Resolution (when closed):** a trivial shared-engine review loop running on a
+  real device/emulator **before** layering the engine change.
+- **Links:** D-SR7; blocks PRD AC 9.B.
+
+### B002 — Render-vs-answer decoupling is the one custom reviewer surface
+
+- **Type:** issue · **Status:** open (verified feasible) · **Severity:** medium
+- **Discovered:** 2026-06-30 by Opus during the consistency/feasibility pass
+- **Ref:** [`spec-engine.md`](./spec-engine.md) §8; D-SR3
+- **Context:** Level-2 renders a *drawn* item while scheduling/answering the *skill
+  card*. Stock Anki couples "the card you see = the card you answer." Feasible via
+  the existing `RenderUncommittedCard`/`RenderExistingCard` RPCs + answering the
+  skill card with the standard `CardAnswer` — but it's the main place a careless
+  change could break the answer flow. Must be honored in **both** the desktop
+  (`qt/aqt/reviewer.py` + `ts/reviewer/`) and AnkiDroid reviewers.
+- **Links:** D-SR3; relates B001.
+
+### B003 — FSRS-as-skill scheduling: interval optimality unproven
+
+- **Type:** issue · **Status:** known-gap · **Severity:** medium
+- **Discovered:** 2026-06-30 by Opus during the consistency pass
+- **Ref:** D-SR3 (gaps); [`spec-measurement.md`](./spec-measurement.md) §3
+- **Context:** FSRS estimates *per-item* memory; Speedrun applies it to a *skill*
+  (fresh item each review), reinterpreting stability/difficulty as skill-level.
+  Scheduling stays **valid** (a normal review stream), and this is the brainlift's
+  intended bet (D4) — but whether the resulting intervals are *optimal* for skill
+  practice is unverified.
+- **Resolution (when closed):** judge via the memory-calibration eval (Brier/log-loss
+  on held-out reviews); if poorly calibrated, revisit the skill↔FSRS mapping.
+- **Links:** D-SR3, D-SR9; spec-measurement §7.
+
+### B004 — Per-device Performance can drift until both devices sync
+
+- **Type:** issue · **Status:** known-gap · **Severity:** low
+- **Discovered:** 2026-06-30 by Opus during the consistency pass
+- **Ref:** D-SR4; [`spec-engine.md`](./spec-engine.md) §7
+- **Context:** Performance is recomputed per-device from the synced skill revlog;
+  specific-item attribution lives in a local sidecar, so two devices can differ
+  briefly before a sync completes. Accepted for v1 (no corruption, no score loss).
+- **Resolution (when closed):** phase-2 synced per-item-outcome table if exact
+  cross-device Performance is required.
+- **Links:** D-SR4.
+
+### B005 — Item-redistribution licensing deferred to ops
+
+- **Type:** issue · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-06-30 by Opus during iris-plan (owner-directed)
+- **Ref:** D-SR11; [`prd-speedrun.md`](./prd-speedrun.md) §8
+- **Context:** v1 bundles a **cited** seed deck of real LSAT items for grading; the
+  owner deferred redistribution licensing as separate logistics, not a code concern.
+  Must be resolved before any public distribution of the bundled deck.
+- **Links:** D-SR11.
+
+### B006 — Tag human-verification throughput is the coverage bottleneck
+
+- **Type:** issue · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-06-30 by Opus during iris-plan (spec-ai)
+- **Ref:** [`spec-ai.md`](./spec-ai.md) §9; D-SR13, D-SR14
+- **Context:** axis-2 (reasoning sub-skill) and trap tags are AI-assisted but must be
+  **human-verified** before they drive scores. Verification throughput gates how
+  fast coverage rises (and thus when Readiness un-abstains).
+- **Resolution (when closed):** prioritize the high-frequency skills first
+  (Flaw/Assumption/Inference ≈ 40% of LR) to raise coverage fastest.
+- **Links:** D-SR13, D-SR14; relates B007.
+
+### B007 — Thin per-skill item pools cause repeats / uncovered skills
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-06-30 by Opus during iris-plan (spec-engine)
+- **Ref:** [`spec-engine.md`](./spec-engine.md) §9
+- **Context:** fresh-item selection needs a **minimum pool size** per skill; below it
+  the engine either repeats items or marks the skill uncovered (feeding
+  coverage/abstain). The bundled seed deck must meet the minimum for any demoed
+  skill.
+- **Links:** relates B006; feeds the coverage gate (spec-measurement §5).
+
+### B008 — Build env can't compile the engine: spaced repo path + no Rust toolchain
+
+- **Type:** issue · **Status:** open · **Severity:** high
+- **Discovered:** 2026-06-30 by Opus during the WP-0 environment probe
+- **Ref:** repo at `/Users/kittysnowball/Desktop/Alpha AI/anki` ("Alpha AI" contains a space); `docs/development.md` ("folder path must not contain spaces"); `rust-toolchain.toml` pins 1.92.0.
+- **Context:** WP-0 (build from source) cannot run here. Two blockers: (1) the repo path contains a **space**, which Anki's ninja build + `CARGO_TARGET_DIR=out/rust` plumbing can break on; (2) **rustc/cargo are not installed**, and there is no `out/` (never built). GUI run also needs a display (headless), and AnkiDroid needs Android SDK/NDK — both need the dev's machine.
+- **Resolution (when closed):** relocate the repo to a **space-free** path (e.g. `~/dev/lsat-speedrun`) by **moving** it to preserve uncommitted work (not a fresh clone), install rustup (toolchain 1.92 auto-installs from `rust-toolchain.toml`), then `./ninja pylib qt` (or `just run`). Do the move **after** the Wave-1 background agents finish writing to this tree.
+- **Links:** blocks WP-0 + all engine WPs (`build-plan.md`); relates B001 (AnkiDroid build).
+
+### B009 — Tag `::` vs `_`: verify Anki hierarchical-tag search before WP-3
+
+- **Type:** bug · **Status:** fixed · **Severity:** high
+- **Discovered:** 2026-06-30 by WP-1 build agent (inbox L4/L8)
+- **Ref:** `tools/speedrun/deck/build_seed_deck.py`; spec-engine §5.2
+- **Context:** the seed builder stored skill-note identity tags as `::`→`_` (e.g. `type_flaw`) and the coverage search converted to `_` too — but item notes were tagged with native `::`, so coverage search silently returned 0.
+- **Resolution (2026-06-30, Opus):** Verified `rslib/src/tags/mod.rs` uses `::` as the native hierarchy separator (`rsplit_once("::")`). Standardized on native `::` everywhere; reverted the `.replace("::","_")` at `build_seed_deck.py:459` and `:526` so skill tags and the coverage search match the item tags. Decision recorded as **D-SR24**. (A round-trip test on a built collection is still advisable — folded into WP-3 / B016.)
+- **Links:** D-SR24, D-SR17; WP-3.
+
+### B010 — Distractor-trap skills: scheduling / pool semantics unresolved
+
+- **Type:** issue · **Status:** done (resolved → D-SR23) · **Severity:** medium
+- **Discovered:** 2026-06-30 by WP-1 build agent (inbox L12)
+- **Ref:** `build_seed_deck.py:_skill_notes_from_taxonomy`; spec-engine §5.2
+- **Context:** distractor traps (half-true, too-extreme…) are *answer-choice* properties, not stimulus types, so "schedule the half-true trap" has no clear item pool. Options: (A) draw from items whose any distractor carries that trap; (B) distractor traps aren't schedulable skills.
+- **Resolution (2026-06-30, owner):** Option **A** — distractor traps **are** schedulable skills; pool(`trap::X`) = items carrying `trap::X`. Recorded as **D-SR23**; WP-11 must emit item-level `trap::*` tags so the pools are populated.
+- **Links:** D-SR23, D-SR17.
+
+### B011 — Card-check factual checker misses semantic inversions
+
+- **Type:** issue · **Status:** known-gap · **Severity:** medium
+- **Discovered:** 2026-06-30 by WP-12 build agent (inbox L-B1)
+- **Ref:** `tools/speedrun/cardcheck/checker.py:FactualChecker`
+- **Context:** lexical token-coverage passes a card that uses the right vocabulary to assert the *opposite* claim (e.g. "correlation *proves* causation"). D1 forbids a model-judged verify; a symbolic negation detector is non-trivial.
+- **Resolution:** revisit before phase-2 real-model AI eval; consider a deterministic negation/entailment check.
+- **Links:** D-SR20.
+
+### B012 — Real LLM client + canonical source not wired (AI features)
+
+- **Type:** issue · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-06-30 by WP-12 build agent (inbox L-D2/L-A1/L-A2)
+- **Ref:** `tools/speedrun/cardcheck/generator.py:LLMClient`; spec-ai §5
+- **Context:** generation uses a deterministic stub behind an `LLMClient` seam; the "run vs gold set" recall interpretation and a canonical single-source URI both need a real model. Same seam applies to tagging (WP-11) and difficulty/readiness model wiring.
+- **Resolution:** wire a real model behind the existing seams when AI features go live (Fri); use a canonical primary source.
+- **Links:** D-SR20, D-SR14; WP-11.
+
+### B013 — Paraphrase variant linking field undefined (`Card.custom_data.variant_of`)
+
+- **Type:** issue · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-06-30 by WP-16 build agent (inbox L6) — cross-WP with WP-1
+- **Ref:** `tools/speedrun/eval/README.md`; spec-engine §7; D-SR4
+- **Context:** the paraphrase eval needs base↔variant item links; WP-16 proposes `Card.custom_data.variant_of = base_item_id` (zero schema change per D-SR4), but WP-1's notetypes didn't define it.
+- **Resolution:** add `variant_of` to the LSAT Item data model (custom_data/tag) in the engine/data WP; confirm with spec owner.
+- **Links:** D-SR4; spec-engine §7.
+
+### B014 — Eval wiring gaps: ease→outcome mapping + no held-out split utility
+
+- **Type:** issue · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-06-30 by WP-16 build agent (inbox L4/L5)
+- **Ref:** `tools/speedrun/eval/README.md`; spec-measurement §7
+- **Context:** (1) `revlog.ease`→0/1 outcome mapping is spec-silent (README assumes ease≥2→1, ease=1→0 — confirm); (2) harnesses take pre-split data but there's no `split.py` to create/pin a leak-free time-based held-out split.
+- **Resolution:** confirm the ease mapping; add a `split.py` utility before running real evals.
+- **Links:** spec-measurement §7; D-SR10, D-SR22.
+
+### B015 — Seed-deck coverage below production threshold (synthetic-only)
+
+- **Type:** issue · **Status:** known-gap · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-1 build agent (inbox L11)
+- **Ref:** `docs/speedrun/data/weights.json`; spec-engine §9
+- **Context:** seed uses `MIN_POOL_SIZE_SEED=3` with 7 synthetic items → only 3/13 types covered at the production threshold (10). Real items (D-SR11) needed for real coverage.
+- **Resolution:** recompute coverage vs production threshold once real items are imported; show per-skill pool sizes on the dashboard.
+- **Links:** B007, D-SR11.
+
+### B016 — Tooling / test-hygiene debt (anki import, models.add, media cleanup, plot test)
+
+- **Type:** refactor · **Status:** known-gap · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-1 + WP-16 build agents (inbox WP-1 L2/L9/L10, WP-16 L7)
+- **Ref:** `tools/speedrun/deck/tests/`, `tools/speedrun/eval/calibration.py`
+- **Context:** minors bundled — (a) `anki` not pip-importable so 15 deck tests skip until `just wheels`; (b) `col.models.add` in-place mutation quirk (must re-fetch by name); (c) test media-folder cleanup may be incomplete; (d) matplotlib plot path is guarded but untested.
+- **Resolution:** address opportunistically; ensure CI builds the wheel before deck tests.
+- **Links:** B008 (env).
+
+### B017 — Implement no-silent-fallback in StemClassifier (D-SR26)
+
+- **Type:** issue · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-06-30 by WP-11 build agent (inbox L-A4); decided D-SR26
+- **Ref:** `tools/speedrun/tagging/tagger.py:StemClassifier._DEFAULT_TYPE`
+- **Context:** unmatched stems currently return `type::flaw` silently; D-SR26 rules they must route to human-verify (`type::unknown` / untyped), excluded from coverage/scheduling.
+- **Resolution:** change the default; add `type::unknown` handling; test unmatched stem → unknown (not flaw).
+- **Links:** D-SR26.
+
+### B018 — Tagging stub can't detect semantic skills/traps (needs real LLM)
+
+- **Type:** issue · **Status:** known-gap · **Severity:** medium
+- **Discovered:** 2026-06-30 by WP-11 build agent (inbox L-A1/L-A2/L-A3/L-B1)
+- **Ref:** `tools/speedrun/tagging/tagger.py:DeterministicStubClient`; `gold_labels.json`
+- **Context:** the deterministic stub scores ~0 F1 on semantically-determined labels (`skill::abstraction` on flaw items, `trap::half-true`, `trap::irrelevant-comparison`, `trap::reversal`); gold set is n=10 synthetic. Honest limitation — real macro-F1 needs the real LLM + ≥50 human-labeled items.
+- **Resolution:** when B012 wires a real model, extend the gold set to ≥50 and re-run the eval.
+- **Links:** B012, D-SR14, D-SR23.
+
+### B019 — VectorKNNBaseline has no `fit()` guard
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-11 build agent (inbox L-B2)
+- **Ref:** `tools/speedrun/tagging/baselines.py:VectorKNNBaseline.propose_tags`
+- **Context:** `propose_tags()` before `fit()` raises at call time but isn't guarded at construction; add an unfitted flag / lazy init.
+- **Links:** —.
+
+### B020 — `apply_tags._find_note` is an O(n) linear scan
+
+- **Type:** refactor · **Status:** open · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-11 build agent (inbox L-B3)
+- **Ref:** `tools/speedrun/tagging/apply_tags.py:_find_note`
+- **Context:** linear scan over all LSAT Item notes — fine at seed scale, slow for 7,500+ real items. Use `col.find_notes` by `_id` or an index before production import.
+- **Links:** D-SR11.
+
+---
+
+<sub>Maintained with the `iris-log` skill by Iris Cai.</sub>

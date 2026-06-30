@@ -1,0 +1,187 @@
+{
+  "_disclaimer": "ALL ITEMS ARE SYNTHETIC PLACEHOLDERS — not real LSAT items. Must NOT be used as study material. D-SR11.",
+  "_format_version": "1.0",
+  "_labeling_note": "Gold labels were assigned by human review during WP-11 construction (2026-06-30). gold_traps = union of all TrapChoiceX tags across wrong choices (D-SR23). Items 1-7 are sourced from tools/speedrun/deck/sample_items.json; items 8-10 are new synthetics added by WP-11.",
+  "items": [
+    {
+      "id": "SYNTH-FLAW-001",
+      "synthetic_flag": "SYNTHETIC",
+      "stimulus": "[SYNTHETIC] All registered voters who showed identification were allowed to vote. Since Maria was allowed to vote, she must have shown identification.",
+      "stem": "The reasoning above is flawed because it",
+      "choices": {
+        "A": "assumes that only registered voters would want to vote",
+        "B": "treats a sufficient condition as a necessary condition",
+        "C": "concludes that Maria is a registered voter without sufficient evidence",
+        "D": "fails to consider that some voters may have been turned away",
+        "E": "relies on an unverified premise about voter identification requirements"
+      },
+      "correct_choice": "B",
+      "gold_type": "type::flaw",
+      "gold_skills": ["skill::conditional", "skill::conclusion-id"],
+      "gold_traps": ["trap::out-of-scope", "trap::half-true"],
+      "_trap_derivation": "TrapA=out-of-scope, TrapC=out-of-scope, TrapD=out-of-scope, TrapE=half-true → union"
+    },
+    {
+      "id": "SYNTH-FLAW-002",
+      "synthetic_flag": "SYNTHETIC",
+      "stimulus": "[SYNTHETIC] Studies show that cities with more libraries have lower crime rates than cities with fewer libraries. Therefore, building more libraries will reduce crime.",
+      "stem": "The argument is most vulnerable to the criticism that it",
+      "choices": {
+        "A": "overstates the magnitude of the relationship between libraries and crime",
+        "B": "fails to consider that crime rates vary significantly by season",
+        "C": "mistakes a correlation for a causal relationship",
+        "D": "assumes that all libraries provide the same services",
+        "E": "ignores the possibility that crime rates have been declining nationally"
+      },
+      "correct_choice": "C",
+      "gold_type": "type::flaw",
+      "gold_skills": ["skill::causal", "skill::conclusion-id"],
+      "gold_traps": ["trap::half-true", "trap::out-of-scope"],
+      "_trap_derivation": "TrapA=half-true, TrapB=out-of-scope, TrapD=out-of-scope, TrapE=half-true → union"
+    },
+    {
+      "id": "SYNTH-FLAW-003",
+      "synthetic_flag": "SYNTHETIC",
+      "stimulus": "[SYNTHETIC] I interviewed five students at a local university who all reported studying fewer than four hours per week. Clearly, university students today are not putting in adequate study time.",
+      "stem": "The argument above is most vulnerable to which of the following criticisms?",
+      "choices": {
+        "A": "It assumes that adequate study time is the same for all students.",
+        "B": "It draws a conclusion about all university students from a small, potentially unrepresentative sample.",
+        "C": "It fails to specify what constitutes adequate study time.",
+        "D": "It does not consider that some students may work part-time jobs.",
+        "E": "It presupposes that studying is the primary determinant of academic success."
+      },
+      "correct_choice": "B",
+      "gold_type": "type::flaw",
+      "gold_skills": ["skill::conclusion-id", "skill::abstraction"],
+      "gold_traps": ["trap::half-true", "trap::out-of-scope"],
+      "_trap_derivation": "TrapA=half-true, TrapC=half-true, TrapD=out-of-scope, TrapE=out-of-scope → union"
+    },
+    {
+      "id": "SYNTH-ASSUMPTION-001",
+      "synthetic_flag": "SYNTHETIC",
+      "stimulus": "[SYNTHETIC] The new transit line will reduce commute times for workers traveling downtown. Therefore, workers will arrive at work less stressed and will be more productive.",
+      "stem": "The argument depends on the assumption that",
+      "choices": {
+        "A": "the transit line will be completed on schedule and within budget",
+        "B": "reduced commute time leads to less stress for commuters",
+        "C": "productivity is the most important measure of worker performance",
+        "D": "downtown workers currently experience significant commute delays",
+        "E": "the transit line will be used by a majority of downtown workers"
+      },
+      "correct_choice": "B",
+      "gold_type": "type::assumption",
+      "gold_skills": ["skill::conclusion-id", "skill::conditional"],
+      "gold_traps": ["trap::out-of-scope", "trap::irrelevant-comparison", "trap::half-true", "trap::too-extreme"],
+      "_trap_derivation": "TrapA=out-of-scope, TrapC=irrelevant-comparison, TrapD=half-true, TrapE=too-extreme → union"
+    },
+    {
+      "id": "SYNTH-ASSUMPTION-002",
+      "synthetic_flag": "SYNTHETIC",
+      "stimulus": "[SYNTHETIC] Sales of electric vehicles have increased every year for the past decade, and consumer awareness campaigns about climate change have also grown over the same period. The campaigns must be responsible for the rise in electric vehicle sales.",
+      "stem": "Which of the following is an assumption required by this argument?",
+      "choices": {
+        "A": "Electric vehicles are the most effective way to reduce carbon emissions.",
+        "B": "No other factors contributed significantly to the rise in electric vehicle sales.",
+        "C": "Consumer awareness campaigns are sponsored by electric vehicle manufacturers.",
+        "D": "The rise in electric vehicle sales is a desirable outcome for policymakers.",
+        "E": "Climate change awareness has increased more rapidly than electric vehicle sales."
+      },
+      "correct_choice": "B",
+      "gold_type": "type::assumption",
+      "gold_skills": ["skill::conclusion-id", "skill::causal"],
+      "gold_traps": ["trap::out-of-scope", "trap::irrelevant-comparison"],
+      "_trap_derivation": "TrapA=out-of-scope, TrapC=out-of-scope, TrapD=out-of-scope, TrapE=irrelevant-comparison → union"
+    },
+    {
+      "id": "SYNTH-INFERENCE-001",
+      "synthetic_flag": "SYNTHETIC",
+      "stimulus": "[SYNTHETIC] All certified organic farms must submit annual soil reports. Greenfield Farm has not submitted a soil report this year.",
+      "stem": "If the statements above are true, which of the following must also be true?",
+      "choices": {
+        "A": "Greenfield Farm does not grow any organic produce.",
+        "B": "Greenfield Farm is not currently a certified organic farm.",
+        "C": "Greenfield Farm will lose its certification next year.",
+        "D": "Most certified organic farms submit their reports on time.",
+        "E": "The soil report requirement is new this year."
+      },
+      "correct_choice": "B",
+      "gold_type": "type::inference",
+      "gold_skills": ["skill::conditional", "skill::quantifier"],
+      "gold_traps": ["trap::out-of-scope", "trap::too-extreme"],
+      "_trap_derivation": "TrapA=out-of-scope, TrapC=too-extreme, TrapD=too-extreme, TrapE=out-of-scope → union"
+    },
+    {
+      "id": "SYNTH-INFERENCE-002",
+      "synthetic_flag": "SYNTHETIC",
+      "stimulus": "[SYNTHETIC] Some of the paintings in the museum were donated by private collectors. All paintings donated by private collectors have been authenticated. No painting that has been authenticated is available for loan.",
+      "stem": "Which of the following can be properly concluded from the statements above?",
+      "choices": {
+        "A": "All paintings in the museum have been authenticated.",
+        "B": "None of the paintings in the museum are available for loan.",
+        "C": "Some paintings in the museum are not available for loan.",
+        "D": "Some authenticated paintings were donated by private collectors.",
+        "E": "No private collector has donated a painting to any other museum."
+      },
+      "correct_choice": "C",
+      "gold_type": "type::inference",
+      "gold_skills": ["skill::quantifier", "skill::conclusion-id"],
+      "gold_traps": ["trap::too-extreme", "trap::reversal", "trap::out-of-scope"],
+      "_trap_derivation": "TrapA=too-extreme, TrapB=too-extreme, TrapD=reversal, TrapE=out-of-scope → union"
+    },
+    {
+      "id": "SYNTH-STRENGTHEN-001",
+      "synthetic_flag": "SYNTHETIC",
+      "stimulus": "[SYNTHETIC] Regular aerobic exercise has been shown to improve cardiovascular health in adults who previously led sedentary lifestyles. The municipal health board has proposed requiring physical education classes in all public schools to improve long-term population health outcomes.",
+      "stem": "Which of the following, if true, most supports the health board's proposal?",
+      "choices": {
+        "A": "Physical education teachers are among the highest-paid staff in most public schools.",
+        "B": "Students who receive physical education as children are significantly more likely to engage in regular aerobic exercise as adults.",
+        "C": "All forms of exercise provide equally significant cardiovascular benefits to adults.",
+        "D": "Aerobic exercise improves health outcomes in adults of all age groups regardless of prior activity level.",
+        "E": "Several countries that mandate school physical education programs have seen modest improvements in general fitness levels."
+      },
+      "correct_choice": "B",
+      "gold_type": "type::strengthen",
+      "gold_skills": ["skill::causal", "skill::prephrase"],
+      "gold_traps": ["trap::out-of-scope", "trap::too-extreme", "trap::half-true"],
+      "_trap_derivation": "TrapA=out-of-scope, TrapC=too-extreme, TrapD=too-extreme, TrapE=half-true → union"
+    },
+    {
+      "id": "SYNTH-WEAKEN-001",
+      "synthetic_flag": "SYNTHETIC",
+      "stimulus": "[SYNTHETIC] All employees who complete the advanced training program are eligible for the performance bonus. Jordan completed the advanced training program last quarter.",
+      "stem": "Which of the following, if true, most seriously weakens the argument that Jordan will receive the performance bonus?",
+      "choices": {
+        "A": "Many employees find the advanced training program to be extremely challenging.",
+        "B": "The performance bonus is only awarded to employees who have been with the company for at least two years, and Jordan was hired eight months ago.",
+        "C": "Completing the advanced training program also increases an employee's chances of promotion, further supporting Jordan's career prospects.",
+        "D": "The company has announced plans to eliminate the performance bonus program entirely next year.",
+        "E": "Some employees who completed the advanced training program voluntarily declined the bonus."
+      },
+      "correct_choice": "B",
+      "gold_type": "type::weaken",
+      "gold_skills": ["skill::conditional", "skill::conclusion-id"],
+      "gold_traps": ["trap::out-of-scope", "trap::wrong-direction", "trap::half-true"],
+      "_trap_derivation": "TrapA=out-of-scope, TrapC=wrong-direction, TrapD=half-true, TrapE=out-of-scope → union"
+    },
+    {
+      "id": "SYNTH-PARADOX-001",
+      "synthetic_flag": "SYNTHETIC",
+      "stimulus": "[SYNTHETIC] The city of Millbrook installed new, brighter street lighting throughout the downtown area two years ago. Since the installation, the number of reported nighttime traffic accidents in the downtown area has increased by twenty percent compared to the two years prior to installation.",
+      "stem": "Which of the following, if true, most helps to explain the increase in reported nighttime traffic accidents?",
+      "choices": {
+        "A": "The new LED streetlights emit a slightly different wavelength of light than the traditional sodium vapor lamps they replaced.",
+        "B": "Downtown Millbrook has experienced a thirty-five percent increase in nighttime vehicle traffic since the lighting improvements attracted more evening visitors.",
+        "C": "Traffic engineers always prefer brighter lighting for all public spaces regardless of cost.",
+        "D": "The brighter lights must have caused drivers to feel safer and therefore drive less cautiously.",
+        "E": "Before the lighting was installed, city officials promised that accidents would be dramatically reduced."
+      },
+      "correct_choice": "B",
+      "gold_type": "type::paradox",
+      "gold_skills": ["skill::causal", "skill::conclusion-id"],
+      "gold_traps": ["trap::out-of-scope", "trap::too-extreme", "trap::half-true", "trap::wrong-direction"],
+      "_trap_derivation": "TrapA=out-of-scope, TrapC=too-extreme, TrapD=half-true (unfounded causal claim), TrapE=wrong-direction → union"
+    }
+  ]
+}

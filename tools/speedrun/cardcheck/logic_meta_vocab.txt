@@ -1,0 +1,265 @@
+# Logic and Argument Meta-Vocabulary Reference
+# Cited source for Speedrun WP-12 card generation and verification.
+# Grounded in: LSAC/LawHub core concepts; PowerScore LR Bible (Killoran & Denning);
+# standard informal-logic texts (Hurley, Copi & Cohen); brainlift J.3, Insight 5.
+# This file is the authoritative source for the card-checker's factual verification.
+# ---------------------------------------------------------------------------------
+
+## §1. Argument Structure Vocabulary
+
+§1.1 argument
+An argument is a set of statements in which one statement (the conclusion) is claimed
+to follow from, or be supported by, the remaining statements (the premises). Not every
+collection of sentences is an argument; an argument requires at least one premise and
+exactly one main conclusion.
+
+§1.2 premise
+A premise is a statement offered as evidence, reason, or support for the conclusion.
+Premises are the reasons given for accepting the conclusion. An argument can have one
+or more premises.
+
+§1.3 conclusion
+The conclusion is the claim that the premises are intended to establish or support.
+It is what the arguer is trying to convince you of. An argument has exactly one main
+conclusion.
+
+§1.4 inference
+An inference is the cognitive process of deriving a conclusion from a set of premises.
+In formal usage, "inference" also refers to a statement derived from other statements
+via a rule of reasoning. Inference is the move from premises to conclusion.
+
+§1.5 assumption
+An assumption is an unstated premise — a claim that the argument requires in order for
+the conclusion to follow, but which the argument does not explicitly state. Identifying
+assumptions is central to evaluating argument strength.
+
+§1.6 necessary assumption
+A necessary assumption is one without which the argument's conclusion cannot hold. If
+the negation (denial) of the assumption destroys the argument, the assumption is
+necessary. The negation test: if denying the claim defeats the conclusion, it is a
+necessary assumption.
+
+§1.7 sufficient assumption
+A sufficient assumption is one that, if added as a premise, guarantees (is enough to
+establish) the conclusion on its own. A sufficient assumption closes the gap between
+the premises and the conclusion.
+
+§1.8 deductive validity
+A deductive argument is valid if and only if it is impossible for all its premises to
+be true and its conclusion to be false. In a valid argument the truth of the premises
+guarantees the truth of the conclusion. Validity concerns logical form, not actual truth.
+
+§1.9 soundness
+A deductive argument is sound if and only if it is both valid and all of its premises
+are actually true. Soundness implies truth of the conclusion.
+
+§1.10 inductive strength
+An inductive argument is strong if the premises make the conclusion probable (likely
+true). Unlike validity, inductive strength admits of degrees. A cogent inductive
+argument is both strong and has actually true premises.
+
+§1.11 enthymeme
+An enthymeme is an argument with one or more unstated (suppressed) premises or a
+suppressed conclusion. The missing piece is assumed to be understood from context.
+
+§1.12 counterexample
+A counterexample is a specific case or instance that disproves a universal claim. If
+someone claims "All A are B," one A that is not B is a counterexample that falsifies
+the claim.
+
+§1.13 logical equivalence
+Two statements are logically equivalent if they have the same truth value in all
+possible situations — whenever one is true, the other is also true, and whenever one is
+false, the other is also false. Logically equivalent statements can substitute for each
+other in an argument without changing its validity.
+
+§1.14 conditional statement
+A conditional statement has the form "If P then Q" (written P → Q). P is the
+antecedent (sufficient condition); Q is the consequent (necessary condition). The
+conditional asserts only that if P is true, Q must be true — not that P is true.
+
+§1.15 contrapositive
+The contrapositive of "If P then Q" is "If not-Q then not-P" (¬Q → ¬P). The
+contrapositive is logically equivalent to the original conditional. Forming the
+contrapositive is the standard technique for reasoning from a denied consequent to a
+denied antecedent.
+
+## §2. Indicator Words
+
+§2.1 conclusion indicators
+Words and phrases that signal the conclusion: therefore, thus, hence, consequently,
+so, it follows that, shows that, demonstrates that, which means that, we can conclude
+that, this proves that, accordingly.
+
+§2.2 premise indicators
+Words and phrases that signal a premise: because, since, for, given that, as indicated
+by, the reason is that, on account of, assuming that, in light of the fact that, as
+shown by, owing to.
+
+§2.3 "therefore"
+The word "therefore" is a conclusion indicator. The statement that follows "therefore"
+is the conclusion of the argument. The statement before "therefore" is typically a
+premise.
+
+§2.4 "since"
+The word "since" (used in a logical, non-temporal sense) is a premise indicator. The
+statement that follows "since" is a premise or reason supporting the claim made
+elsewhere in the sentence.
+
+§2.5 "because"
+The word "because" is a premise indicator. What follows "because" gives the reason or
+evidence for the claim made in the main clause.
+
+§2.6 "it follows that"
+The phrase "it follows that" is a conclusion indicator. The statement following "it
+follows that" is the conclusion drawn from the preceding premises.
+
+§2.7 "given that"
+The phrase "given that" is a premise indicator. It introduces a premise or assumption
+being granted for the sake of the argument.
+
+§2.8 "which shows that"
+The phrase "which shows that" is a conclusion indicator. The observation or evidence
+stated earlier supports the claim introduced by "which shows that."
+
+## §3. Quantifiers and Quantifier Reasoning
+
+§3.1 universal quantifier "all"
+The word "all" (universal quantifier) asserts that every member of the subject class
+has the predicate property. "All A are B" means: for every individual x, if x is an A
+then x is a B. A single counterexample (an A that is not B) falsifies the statement.
+
+§3.2 existential quantifier "some"
+The word "some" (existential quantifier) asserts that at least one member of the
+subject class has the predicate property. "Some A are B" is true as long as there
+exists at least one thing that is both A and B.
+
+§3.3 negation of "All A are B"
+The negation of "All A are B" is "Some A are not B." If it is not the case that every
+A is a B, then there must be at least one A that lacks the property B.
+
+§3.4 negation of "No A are B"
+The negation of "No A are B" is "Some A are B." If it is not the case that no A is a
+B, then there must be at least one thing that is both A and B.
+
+§3.5 "most"
+The word "most" asserts that more than half (>50%) of the subject class has the
+predicate property. "Most A are B" is stronger than "Some A are B" (which requires
+only one) but weaker than "All A are B" (which requires every one).
+
+§3.6 sufficient condition
+In a conditional "If A then B," A is the sufficient condition. A's truth is enough to
+guarantee B's truth. However, A is not the only possible way to bring about B.
+
+§3.7 necessary condition
+In a conditional "If A then B," B is the necessary condition. B must be true if A is
+true; without B, A cannot be true. The falsity of B (not-B) guarantees the falsity of
+A (not-A) — the contrapositive.
+
+## §4. The Flaw (Fallacy) Catalog
+
+§4.1 ad hominem
+The ad hominem fallacy attacks the person making the argument rather than the argument
+itself. Even if the person has flaws, those flaws do not automatically make the
+argument wrong. The argument must be evaluated on its own merits.
+
+§4.2 straw man
+The straw man fallacy misrepresents someone's argument — typically exaggerating or
+distorting it — in order to make it easier to attack. The arguer refutes the
+misrepresented version rather than the actual argument.
+
+§4.3 false dilemma (false dichotomy)
+The false dilemma presents only two options as if they were exhaustive when in fact
+other options exist. "Either X or Y; not X; therefore Y" is only valid if X and Y
+really are the only possibilities.
+
+§4.4 circular reasoning (begging the question)
+Circular reasoning uses the conclusion as a premise — either explicitly or in
+disguised form — so that the argument assumes what it is trying to prove. No
+independent evidence is offered for the conclusion.
+
+§4.5 correlation-causation fallacy
+The correlation-causation fallacy assumes that because two events or variables are
+correlated (occur together or covary), one causes the other. Correlation is evidence
+for causation but does not establish it; alternative explanations (reverse causation,
+common cause, coincidence) must be ruled out.
+
+§4.6 sufficient-necessary confusion
+The sufficient-necessary confusion treats a sufficient condition as if it were a
+necessary condition, or a necessary condition as if it were sufficient. If "studying
+guarantees a pass" (sufficient), erroneously concluding "not studying guarantees
+failure" commits this fallacy (the inverse error). Similarly, confusing the
+converse with the conditional is a form of this error.
+
+§4.7 equivocation
+The equivocation fallacy uses the same word or phrase in two different senses within
+an argument. The argument appears valid only because the shift in meaning is concealed.
+
+§4.8 composition fallacy
+The composition fallacy (part-to-whole) assumes that what is true of the individual
+parts of something must also be true of the whole. Parts having a property does not
+entail the whole has that property.
+
+§4.9 division fallacy
+The division fallacy (whole-to-part) assumes that what is true of the whole must also
+be true of each of its parts. A whole having a property does not entail that each
+component has that property.
+
+§4.10 slippery slope
+The slippery slope fallacy claims that a relatively small first step will, without
+adequate justification, inevitably lead to a chain of events culminating in some
+significant and usually negative consequence. The fallacy lies in the unwarranted
+assumption of the chain.
+
+§4.11 appeal to authority (ad verecundiam)
+The appeal to authority accepts a claim solely or primarily because an authority figure
+asserts it, without independent support. This is fallacious when the authority is not
+relevant to the subject, or when legitimate experts disagree.
+
+§4.12 appeal to popularity (ad populum)
+The appeal to popularity (bandwagon) accepts a claim because many people believe it.
+The number of believers does not determine the truth of a claim.
+
+§4.13 hasty generalization
+The hasty generalization draws a broad conclusion from a sample that is too small or
+not representative of the relevant population.
+
+§4.14 red herring
+The red herring introduces information that is irrelevant to the conclusion in order
+to distract from the real issue. The arguer diverts attention by raising a tangential
+point.
+
+§4.15 post hoc ergo propter hoc (false cause)
+Post hoc ergo propter hoc ("after this, therefore because of this") assumes that
+because event B followed event A in time, A caused B. Temporal succession is not
+sufficient evidence for causation.
+
+§4.16 appeal to ignorance (ad ignorantiam)
+The appeal to ignorance claims that a proposition is true because it has not been
+proven false, or false because it has not been proven true. The absence of evidence
+is not by itself evidence of absence.
+
+§4.17 scope error (overgeneralization)
+A scope error applies a rule, generalization, or statistic to a case that falls
+outside the domain for which it was established, or treats a qualified claim as if it
+were universal.
+
+§4.18 sampling bias
+Sampling bias occurs when the sample used to draw a conclusion is not representative
+of the target population, systematically over- or under-representing some subgroup.
+Conclusions drawn from a biased sample may not hold for the population at large.
+
+§4.19 is-ought gap (naturalistic fallacy)
+The is-ought gap (Hume's guillotine) is the error of inferring a normative conclusion
+("ought") purely from a descriptive premise ("is"). What is the case does not by
+itself determine what ought to be the case.
+
+§4.20 affirming the consequent
+Affirming the consequent is an invalid argument form: "If P then Q; Q is true;
+therefore P is true." Q being true does not guarantee P, because Q might have other
+causes. This is the converse error.
+
+§4.21 denying the antecedent
+Denying the antecedent is an invalid argument form: "If P then Q; P is false;
+therefore Q is false." P's falsity does not rule out Q, because Q might follow from
+something else. This is the inverse error.

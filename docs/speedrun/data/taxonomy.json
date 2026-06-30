@@ -1,0 +1,345 @@
+{
+  "version": "1.0",
+  "description": "PowerScore-derived LR taxonomy: axis-1 question types, axis-2 reasoning sub-skills, trap catalog. Stable data contract for WP-1 and downstream work packages. D-SR13.",
+  "tag_prefixes": {
+    "question_type": "type::",
+    "reasoning_subskill": "skill::",
+    "trap": "trap::"
+  },
+  "axis1_question_types": [
+    {
+      "id": "QT01",
+      "canonical_name": "Must Be True / Inference",
+      "tag": "type::inference",
+      "concordance": ["Identify an Entailment (Khan)", "Fill-In (Loophole)", "Inference (LSAT Trainer)"],
+      "description": "Deductive inference from the stimulus; the correct answer must be true given the facts.",
+      "approx_frequency_pct": 10,
+      "subtypes": [],
+      "primary_skills": ["skill::conclusion-id", "skill::quantifier", "skill::conditional"]
+    },
+    {
+      "id": "QT02",
+      "canonical_name": "Main Point",
+      "tag": "type::main-point",
+      "concordance": ["Conclusion (some sources)", "Main Conclusion"],
+      "description": "Identify the primary conclusion of the argument.",
+      "approx_frequency_pct": 5,
+      "subtypes": [],
+      "primary_skills": ["skill::conclusion-id"]
+    },
+    {
+      "id": "QT03",
+      "canonical_name": "Point at Issue",
+      "tag": "type::point-at-issue",
+      "concordance": ["Point of Disagreement / Agreement"],
+      "description": "Identify the claim two speakers disagree about (or agree on).",
+      "approx_frequency_pct": 4,
+      "subtypes": [],
+      "primary_skills": ["skill::conclusion-id", "skill::abstraction"]
+    },
+    {
+      "id": "QT04",
+      "canonical_name": "Method of Reasoning",
+      "tag": "type::method",
+      "concordance": ["Method of Argument"],
+      "description": "Describe how the argument proceeds (abstract structure, not content).",
+      "approx_frequency_pct": 7,
+      "subtypes": ["type::method-role"],
+      "primary_skills": ["skill::abstraction", "skill::conclusion-id"]
+    },
+    {
+      "id": "QT05",
+      "canonical_name": "Flaw in Reasoning",
+      "tag": "type::flaw",
+      "concordance": ["Error in Reasoning", "Flaw"],
+      "description": "Identify and name the logical flaw in the argument.",
+      "approx_frequency_pct": 14,
+      "subtypes": [],
+      "primary_skills": ["skill::conclusion-id", "skill::conditional", "skill::causal", "skill::abstraction"]
+    },
+    {
+      "id": "QT06",
+      "canonical_name": "Parallel Reasoning",
+      "tag": "type::parallel",
+      "concordance": ["Parallel Structure"],
+      "description": "Find the argument most similar in logical structure; Parallel Flaw variant targets the same flaw.",
+      "approx_frequency_pct": 7,
+      "subtypes": ["type::parallel-flaw"],
+      "primary_skills": ["skill::abstraction"]
+    },
+    {
+      "id": "QT07",
+      "canonical_name": "Strengthen",
+      "tag": "type::strengthen",
+      "concordance": ["Support", "Most Supports"],
+      "description": "Identify the choice that most strengthens the argument.",
+      "approx_frequency_pct": 9,
+      "subtypes": [],
+      "primary_skills": ["skill::causal", "skill::conditional", "skill::prephrase"]
+    },
+    {
+      "id": "QT08",
+      "canonical_name": "Assumption (Necessary)",
+      "tag": "type::assumption",
+      "concordance": ["Necessary Assumption", "Required Assumption", "Defender/Supporter (PowerScore method)"],
+      "description": "Find the assumption the argument depends on (negate it and the argument fails).",
+      "approx_frequency_pct": 10,
+      "subtypes": [],
+      "primary_skills": ["skill::conclusion-id", "skill::conditional", "skill::prephrase"]
+    },
+    {
+      "id": "QT09",
+      "canonical_name": "Justify the Conclusion",
+      "tag": "type::justify",
+      "concordance": ["Sufficient Assumption", "SA", "Justify Formula (PowerScore)"],
+      "description": "Find the choice that, if true, guarantees the conclusion follows.",
+      "approx_frequency_pct": 6,
+      "subtypes": [],
+      "primary_skills": ["skill::conditional", "skill::conclusion-id"]
+    },
+    {
+      "id": "QT10",
+      "canonical_name": "Weaken",
+      "tag": "type::weaken",
+      "concordance": ["Undermine", "Most Undermines"],
+      "description": "Identify the choice that most undermines the argument.",
+      "approx_frequency_pct": 9,
+      "subtypes": [],
+      "primary_skills": ["skill::causal", "skill::conditional", "skill::prephrase"]
+    },
+    {
+      "id": "QT11",
+      "canonical_name": "Evaluate the Argument",
+      "tag": "type::evaluate",
+      "concordance": ["Assess the Impact"],
+      "description": "Identify which piece of information would most help evaluate the argument's strength.",
+      "approx_frequency_pct": 3,
+      "subtypes": [],
+      "primary_skills": ["skill::causal", "skill::conditional"]
+    },
+    {
+      "id": "QT12",
+      "canonical_name": "Resolve the Discrepancy",
+      "tag": "type::paradox",
+      "concordance": ["Paradox", "Explain", "Reconcile"],
+      "description": "Find the choice that explains the apparent contradiction or surprising result.",
+      "approx_frequency_pct": 7,
+      "subtypes": [],
+      "primary_skills": ["skill::causal", "skill::conclusion-id"]
+    },
+    {
+      "id": "QT13",
+      "canonical_name": "Principle",
+      "tag": "type::principle",
+      "concordance": ["Principle Identify", "Principle Apply"],
+      "description": "Identify an underlying principle OR apply a given principle to a specific case.",
+      "approx_frequency_pct": 9,
+      "subtypes": ["type::principle-identify", "type::principle-apply"],
+      "primary_skills": ["skill::abstraction", "skill::conclusion-id"]
+    }
+  ],
+  "axis1_subtypes": [
+    {"tag": "type::method-role", "parent": "type::method", "description": "Role of a Statement variant — what role does this statement play?"},
+    {"tag": "type::parallel-flaw", "parent": "type::parallel", "description": "Parallel Flaw — find the argument with the same logical flaw"},
+    {"tag": "type::principle-identify", "parent": "type::principle", "description": "Identify an underlying principle from examples"},
+    {"tag": "type::principle-apply", "parent": "type::principle", "description": "Apply a stated principle to a specific case"}
+  ],
+  "axis2_reasoning_subskills": [
+    {
+      "id": "SK01",
+      "name": "Conclusion / Premise Identification",
+      "tag": "skill::conclusion-id",
+      "priority": "critical",
+      "description": "Identify which statement is the conclusion vs. premises. Misidentification cascades into assumption, flaw, and strengthen/weaken failures.",
+      "key_indicators": ["therefore", "thus", "hence", "so", "which means", "in conclusion", "since", "because", "given that"]
+    },
+    {
+      "id": "SK02",
+      "name": "Conditional Reasoning",
+      "tag": "skill::conditional",
+      "priority": "high",
+      "description": "Sufficient/necessary conditions, if/then chains, contrapositive. The most common source of flaw questions.",
+      "key_indicators": ["if...then", "only if", "unless", "whenever", "all", "none", "no"]
+    },
+    {
+      "id": "SK03",
+      "name": "Causal Reasoning",
+      "tag": "skill::causal",
+      "priority": "high",
+      "description": "Arguments that assert causation. Strengthen/weaken levers: alternate cause, reverse causation, coincidence, common cause.",
+      "key_indicators": ["causes", "leads to", "results in", "due to", "because of", "effect of"]
+    },
+    {
+      "id": "SK04",
+      "name": "Prephrasing",
+      "tag": "skill::prephrase",
+      "priority": "medium",
+      "description": "Generating a prediction of the correct answer before reading choices (K.1 generation step). Reduces contender-lock trap.",
+      "key_indicators": []
+    },
+    {
+      "id": "SK05",
+      "name": "Formal-Logic Quantifiers",
+      "tag": "skill::quantifier",
+      "priority": "low",
+      "description": "Inference rules for all/most/some/none. Rare on post-2024 LSAT; treated as a separate sub-skill to track.",
+      "key_indicators": ["all", "most", "some", "no", "none", "few", "many"]
+    },
+    {
+      "id": "SK06",
+      "name": "Abstraction",
+      "tag": "skill::abstraction",
+      "priority": "high",
+      "description": "Stripping content to see pure logical form — required for Parallel Reasoning and abstract Flaw questions. The hardest cluster.",
+      "key_indicators": []
+    }
+  ],
+  "trap_catalog": {
+    "description": "Finite enumerable catalog of named traps. Two sub-catalogs: argument flaws (in stimulus) and distractor/answer-choice traps. Tag: trap::<slug>.",
+    "argument_flaws": [
+      {
+        "id": "F01",
+        "name": "Sufficient / Necessary Confusion",
+        "tag": "trap::sufficient-necessary",
+        "description": "Conflates 'if A then B' (A sufficient for B) with 'if B then A' (B sufficient for A, A necessary for B). Most common flaw on the exam.",
+        "frequency": "very-high"
+      },
+      {
+        "id": "F02",
+        "name": "Correlation vs. Causation",
+        "tag": "trap::correlation-causation",
+        "description": "Observes correlation between two phenomena and incorrectly infers one causes the other.",
+        "frequency": "high"
+      },
+      {
+        "id": "F03",
+        "name": "Circular Reasoning",
+        "tag": "trap::circular",
+        "description": "The conclusion restates or presupposes a premise; also called 'begging the question.'",
+        "frequency": "medium"
+      },
+      {
+        "id": "F04",
+        "name": "Equivocation",
+        "tag": "trap::equivocation",
+        "description": "A key term shifts meaning (or is ambiguous) between its use in the premise and the conclusion.",
+        "frequency": "medium"
+      },
+      {
+        "id": "F05",
+        "name": "Part-to-Whole / Whole-to-Part",
+        "tag": "trap::part-whole",
+        "description": "What is true of parts must be true of the whole, or vice versa (composition/division fallacy).",
+        "frequency": "medium"
+      },
+      {
+        "id": "F06",
+        "name": "Hasty Generalization",
+        "tag": "trap::hasty-generalization",
+        "description": "Draws a broad conclusion from an unrepresentative or too-small sample.",
+        "frequency": "medium"
+      },
+      {
+        "id": "F07",
+        "name": "False Dichotomy",
+        "tag": "trap::false-dichotomy",
+        "description": "Presents only two options as if exhaustive when other alternatives exist.",
+        "frequency": "medium"
+      },
+      {
+        "id": "F08",
+        "name": "Straw Man",
+        "tag": "trap::straw-man",
+        "description": "Misrepresents an opponent's position then attacks the misrepresentation.",
+        "frequency": "low"
+      },
+      {
+        "id": "F09",
+        "name": "Ad Hominem",
+        "tag": "trap::ad-hominem",
+        "description": "Attacks the source or speaker rather than the argument.",
+        "frequency": "low"
+      },
+      {
+        "id": "F10",
+        "name": "Appeal to Inappropriate Authority",
+        "tag": "trap::appeal-authority",
+        "description": "Cites an authority without sufficient warrant for the specific domain or claim.",
+        "frequency": "low"
+      },
+      {
+        "id": "F11",
+        "name": "False Analogy",
+        "tag": "trap::false-analogy",
+        "description": "Draws an analogy between two situations that differ in a relevant respect.",
+        "frequency": "medium"
+      },
+      {
+        "id": "F12",
+        "name": "Scope Shift",
+        "tag": "trap::scope-shift",
+        "description": "The conclusion concerns a different entity, property, or time frame than what the premises support.",
+        "frequency": "high"
+      }
+    ],
+    "distractor_traps": [
+      {
+        "id": "D01",
+        "name": "Half-True",
+        "tag": "trap::half-true",
+        "description": "The choice is partially correct but incomplete or imprecise; passes a quick read but fails on inspection.",
+        "frequency": "high"
+      },
+      {
+        "id": "D02",
+        "name": "Too Extreme",
+        "tag": "trap::too-extreme",
+        "description": "Uses absolute language (always, never, all, none) where the stimulus is hedged or probabilistic.",
+        "frequency": "high"
+      },
+      {
+        "id": "D03",
+        "name": "Out of Scope",
+        "tag": "trap::out-of-scope",
+        "description": "Introduces a concept, entity, or comparison not present in the stimulus.",
+        "frequency": "high"
+      },
+      {
+        "id": "D04",
+        "name": "Contradicts Text",
+        "tag": "trap::contradicts",
+        "description": "Directly contradicts a stated or clearly inferable fact from the stimulus.",
+        "frequency": "medium"
+      },
+      {
+        "id": "D05",
+        "name": "Wrong Direction",
+        "tag": "trap::wrong-direction",
+        "description": "Strengthens the argument when the task is to weaken it, or vice versa.",
+        "frequency": "medium"
+      },
+      {
+        "id": "D06",
+        "name": "Reversal",
+        "tag": "trap::reversal",
+        "description": "The choice itself confuses sufficient and necessary conditions (distinct from the stimulus flaw F01).",
+        "frequency": "medium"
+      },
+      {
+        "id": "D07",
+        "name": "Irrelevant Comparison",
+        "tag": "trap::irrelevant-comparison",
+        "description": "Compares entities or groups that are not at issue in the argument.",
+        "frequency": "low"
+      }
+    ]
+  },
+  "tagging_rules": [
+    "Every LSAT Item note carries exactly one type:: tag.",
+    "Every LSAT Item note carries one or more skill:: tags.",
+    "Wrong answer choices are tagged with a trap:: slug in the TrapChoice<X> fields.",
+    "The stimulus flaw (for type::flaw questions) is tagged in TrapTag.",
+    "Every LSAT Skill note carries exactly one identity tag: a type::, skill::, or trap:: tag.",
+    "Tag strings are kebab-case lowercase. No spaces inside a tag value."
+  ]
+}

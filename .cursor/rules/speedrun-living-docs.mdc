@@ -1,0 +1,33 @@
+---
+description: Maintain the Speedrun project's living docs (iris-log) after meaningful changes
+alwaysApply: true
+---
+
+# Speedrun — keep the living docs current (iris-log)
+
+When you make a **meaningful change to the Speedrun project** (an LSAT study app
+forked from Anki; its planning + code live in this repo alongside upstream Anki),
+update its living memory in `docs/speedrun/` following the **iris-log** skill
+(`~/.cursor/skills/iris-log/SKILL.md`). This keeps the next agent oriented and stops
+anyone from treating the frozen PRD as current truth. (Only act when the change is
+actually Speedrun-related; ignore for unrelated upstream Anki work.)
+
+## When to log
+- A decision made or changed → **decision log** `docs/speedrun/decisions.md`
+- A test-/feedback-driven change → **iterations log** `docs/speedrun/design-iterations.md` (create if absent)
+- Something broken / tech debt / open non-decision question → **backlog** `docs/speedrun/backlog.md`
+- The big picture moved (feature shipped, approach changed) → refresh `docs/speedrun/AGENTS.md`
+
+## How — so entries ACCUMULATE and never clobber
+1. **Read first.** Open the target doc + `AGENTS.md`; use the **next-free ID** it states.
+2. **Append / targeted-edit only.** Never rewrite a whole log file.
+3. **Decisions are append-only:** new stable `D-SR<N>`; to change one, add a *new* entry and mark the old `Status: superseded by D-SR<M>` — never rewrite history.
+4. **Backlog IDs** are monotonic `B<NNN>`, never reused; update a status **in place**; don't delete closed items (mark them done with a verdict).
+5. **`AGENTS.md`** is the only present-truth doc you refresh in place — keep the next-free IDs and the "Overrides since the plan" list current.
+
+## Authority + overrides
+- Source-of-truth order: `AGENTS.md` → `decisions.md` (latest non-superseded) → iterations log → frozen PRD/specs. **When a spec and a decision conflict, the decision wins.**
+- **Never edit the frozen PRD/specs to track drift.** If a change overrides them, add a decision entry naming it (`Overrides: PRD §… / supersedes D-SR…`) **and** a line in `AGENTS.md` → "Overrides since the plan."
+- Do not confuse `docs/speedrun/AGENTS.md` (this project's front door) with the repo-root `AGENTS.md` (upstream Anki's build doc).
+
+Full procedure lives in the `iris-log` skill.
