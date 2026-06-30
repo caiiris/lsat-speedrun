@@ -3,6 +3,7 @@
 
 pub(crate) mod data;
 pub(crate) mod filtered;
+pub(crate) mod speedrun;
 
 use std::collections::HashSet;
 use std::convert::TryFrom;

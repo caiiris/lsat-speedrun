@@ -1025,6 +1025,15 @@ class Collection(DeprecatedNamesMixin):
     ) -> Sequence[stats_pb2.CardStatsResponse.StatsRevlogEntry]:
         return self._backend.get_review_logs(card_id)
 
+    def skill_mastery(self, deck_id: int) -> list[stats_pb2.SkillMastery]:
+        """Speedrun WP-5: per-skill mastery aggregate for the dashboard.
+
+        Returns one SkillMastery entry per skill found in the given deck (and
+        its child decks), with mastered count, total count, and average FSRS
+        recall probability.  See docs/speedrun/spec-engine.md §5.4.
+        """
+        return list(self._backend.skill_mastery(deck_id=deck_id))
+
     def studied_today(self) -> str:
         return self._backend.studied_today()
 
