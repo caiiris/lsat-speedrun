@@ -53,14 +53,18 @@ impl crate::services::SchedulerService for Collection {
         Ok(studied_today(input.cards, input.seconds as f32, &self.tr).into())
     }
 
-    /// Speedrun (WP-2 contract stub). Fresh-item selection is implemented in
-    /// WP-3 (`docs/speedrun/spec-engine.md` §5.2); this placeholder keeps the
-    /// generated service trait satisfied so the contract compiles.
+    /// Speedrun WP-3: select a fresh item note for a due skill card.
+    ///
+    /// Delegates to the selection algorithm in
+    /// `scheduler/queue/selection.rs`.  See spec-engine §5.2 + §7.
     fn draw_item_for_skill(
         &mut self,
-        _input: scheduler::DrawItemForSkillRequest,
+        input: scheduler::DrawItemForSkillRequest,
     ) -> Result<scheduler::DrawItemForSkillResponse> {
-        invalid_input!("draw_item_for_skill not implemented yet (WP-3)")
+        let item_note_id = self.draw_item_for_skill_impl(CardId(input.skill_card_id))?;
+        Ok(scheduler::DrawItemForSkillResponse {
+            item_note_id: item_note_id.0,
+        })
     }
 
     fn update_stats(&mut self, input: scheduler::UpdateStatsRequest) -> Result<()> {
