@@ -55,6 +55,14 @@ NOTETYPE_META = "LSAT Meta"
 NOTETYPE_SKILL = "LSAT Skill"
 NOTETYPE_ITEM = "LSAT Item"
 
+# Deck options preset assigned to the Speedrun decks. Anki's *default* preset caps
+# new cards at 20/day; the seed deck has 38 skills + 13 meta, so we ship a dedicated
+# preset with a higher limit. These are seed/dev defaults and are tunable in Deck
+# Options; real new-card pacing is a future deck-config decision.
+DECK_CONFIG_NAME = "LSAT Speedrun"
+NEW_CARDS_PER_DAY = 100
+REVIEWS_PER_DAY = 1000
+
 MIN_POOL_SIZE_SEED = 3  # minimum items for a skill to be considered covered in seed deck
 
 
@@ -432,6 +440,23 @@ def _populate_collection(
     skills_did = col.decks.id(DECK_SKILLS)
     items_did = col.decks.id(DECK_ITEMS)
 
+    # ------------------------------------------- deck options preset (>20/day)
+    # The default preset caps new cards at 20/day; assign a Speedrun preset with
+    # a higher limit so all skills/meta cards are available.
+    conf_id = col.decks.add_config_returning_id(DECK_CONFIG_NAME)
+    conf = col.decks.get_config(conf_id)
+    assert conf is not None, "Failed to create Speedrun deck config"
+    conf["new"]["perDay"] = NEW_CARDS_PER_DAY
+    conf["rev"]["perDay"] = REVIEWS_PER_DAY
+    col.decks.update_config(conf)
+    for did in (meta_did, skills_did, items_did):
+        deck = col.decks.get(did)
+        assert deck is not None
+        deck["conf"] = conf_id
+        col.decks.save(deck)
+    if verbose:
+        print(f"  Set '{DECK_CONFIG_NAME}' preset: {NEW_CARDS_PER_DAY} new/day, {REVIEWS_PER_DAY} rev/day.")
+
     # ------------------------------------------------------------ notetypes
     nt_meta = _make_notetype_meta(col)
     col.models.add(nt_meta)
@@ -526,7 +551,9 @@ def _build_coverage_report(
         # Search for notes in the Items deck tagged with this type tag.
         # Anki uses :: as the native tag-hierarchy separator (rslib/src/tags),
         # so tags are stored and searched with :: intact (D-SR24 / B009).
-        note_ids = col.find_notes(f"tag:{tag} deck:{DECK_ITEMS!r}")
+        # Anki search uses DOUBLE quotes for phrases; Python's !r emits single
+        # quotes, which Anki mis-parses → 0 results (B021).
+        note_ids = col.find_notes(f'tag:{tag} deck:"{DECK_ITEMS}"')
         count = len(note_ids)
         report.pool_counts[tag] = count
         if count >= min_pool_size:

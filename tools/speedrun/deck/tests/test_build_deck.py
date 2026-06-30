@@ -94,8 +94,15 @@ def coverage_report(tmp_col_path: str):
 
 
 @pytest.fixture(scope="module")
-def open_col(tmp_col_path: str):
-    """Return an open Collection for inspection (closed at module teardown)."""
+def open_col(tmp_col_path: str, coverage_report):
+    """Return an open Collection for inspection (closed at module teardown).
+
+    Depends on ``coverage_report`` so the deck is built *and closed* before we
+    open the same file here. Without this dependency, an ``open_col``-only test
+    could run first, create an empty collection, and hold the file open — which
+    then makes the ``build_seed_deck`` call inside ``coverage_report`` fail to
+    open it (B016).
+    """
     from anki.collection import Collection
     col = Collection(tmp_col_path)
     yield col

@@ -17,9 +17,9 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B008, B012, B013, B014, B017, B019, B020 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
-| fixed / done | B009, B010 |
+| fixed / done | B008, B009, B010, B021 |
 
 ---
 
@@ -109,12 +109,12 @@
 
 ### B008 — Build env can't compile the engine: spaced repo path + no Rust toolchain
 
-- **Type:** issue · **Status:** open · **Severity:** high
+- **Type:** issue · **Status:** fixed · **Severity:** high
 - **Discovered:** 2026-06-30 by Opus during the WP-0 environment probe
 - **Ref:** repo at `/Users/kittysnowball/Desktop/Alpha AI/anki` ("Alpha AI" contains a space); `docs/development.md` ("folder path must not contain spaces"); `rust-toolchain.toml` pins 1.92.0.
 - **Context:** WP-0 (build from source) cannot run here. Two blockers: (1) the repo path contains a **space**, which Anki's ninja build + `CARGO_TARGET_DIR=out/rust` plumbing can break on; (2) **rustc/cargo are not installed**, and there is no `out/` (never built). GUI run also needs a display (headless), and AnkiDroid needs Android SDK/NDK — both need the dev's machine.
-- **Resolution (when closed):** relocate the repo to a **space-free** path (e.g. `~/dev/lsat-speedrun`) by **moving** it to preserve uncommitted work (not a fresh clone), install rustup (toolchain 1.92 auto-installs from `rust-toolchain.toml`), then `./ninja pylib qt` (or `just run`). Do the move **after** the Wave-1 background agents finish writing to this tree.
-- **Links:** blocks WP-0 + all engine WPs (`build-plan.md`); relates B001 (AnkiDroid build).
+- **Resolution (2026-06-30, Opus):** **Both desktop blockers cleared.** The repo now lives at the space-free `/Users/kittysnowball/dev/lsat-speedrun`; Rust 1.92.0 (rustc/cargo/rustup) is installed and matches `rust-toolchain.toml`; a full `out/` build exists with `out/buildhash == HEAD (f4fe85cc)`. Verified: `just build` (= `./ninja pylib qt`) succeeds, and `anki` v26.05 imports (`PYTHONPATH=out/pylib:pylib` for the generated `buildinfo`/`_rsbridge`/`_fluent` modules). **WP-0a (desktop) is green.** The GUI `just run` (needs a display) and **WP-0b (AnkiDroid)** (needs Android SDK/NDK + device) remain on the dev's machine → tracked under **B001**.
+- **Links:** unblocks WP-0a + all engine WPs (`build-plan.md`); WP-0b/mobile build still open under B001.
 
 ### B009 — Tag `::` vs `_`: verify Anki hierarchical-tag search before WP-3
 
@@ -185,7 +185,8 @@
 - **Discovered:** 2026-06-30 by WP-1 + WP-16 build agents (inbox WP-1 L2/L9/L10, WP-16 L7)
 - **Ref:** `tools/speedrun/deck/tests/`, `tools/speedrun/eval/calibration.py`
 - **Context:** minors bundled — (a) `anki` not pip-importable so 15 deck tests skip until `just wheels`; (b) `col.models.add` in-place mutation quirk (must re-fetch by name); (c) test media-folder cleanup may be incomplete; (d) matplotlib plot path is guarded but untested.
-- **Resolution:** address opportunistically; ensure CI builds the wheel before deck tests.
+- **Update (2026-06-30, Opus):** with the engine now built (B008), `anki` imports via `PYTHONPATH=out/pylib:pylib:tools ANKI_TEST_MODE=1`. Running the full speedrun suite that way surfaced + fixed a **latent fixture bug** in `test_build_deck.py`: `open_col` didn't depend on `coverage_report`, so an `open_col`-only test could open an empty collection first and lock the file, breaking the later `build_seed_deck` call (the deck tests had only ever *skipped*, so this never showed). Fixed by making `open_col` depend on `coverage_report`. **Whole speedrun suite now green: 198 passed, 1 skipped** (the 1 skip = the guarded matplotlib plot, item (d)). Still open: wire these tests into the build's pytest folder with `out/pylib` on `pythonpath` (the `check:pytest:tools` rule runs `tools/tests` only and sets `pythonpath = tools`), plus items (c)/(d).
+- **Resolution:** address opportunistically; ensure CI builds the wheel + adds `out/pylib` to the tools-test pythonpath before deck tests.
 - **Links:** B008 (env).
 
 ### B017 — Implement no-silent-fallback in StemClassifier (D-SR26)
@@ -221,6 +222,33 @@
 - **Ref:** `tools/speedrun/tagging/apply_tags.py:_find_note`
 - **Context:** linear scan over all LSAT Item notes — fine at seed scale, slow for 7,500+ real items. Use `col.find_notes` by `_id` or an index before production import.
 - **Links:** D-SR11.
+
+### B021 — Coverage query used single-quoted deck filter → always 0 coverage
+
+- **Type:** bug · **Status:** fixed · **Severity:** high
+- **Discovered:** 2026-06-30 by Opus, first real run of `build_seed_deck.py` against the built `anki` lib (v26.05)
+- **Ref:** `tools/speedrun/deck/build_seed_deck.py:529` (`_build_coverage_report`)
+- **Context:** the coverage search built the deck filter with `{DECK_ITEMS!r}` (Python repr → **single** quotes: `deck:'LSAT Speedrun::Items'`). Anki search requires **double** quotes; single quotes are mis-parsed, so the query returned **0 for every skill** → coverage always 0/13 → the give-up gate would *always* abstain. (Items were correctly created, suspended, and tagged with native `::`; only the query was wrong.)
+- **Resolution:** changed to `deck:"{DECK_ITEMS}"`. Verified on a temp collection: coverage now reports flaw=3, inference=2, assumption=2 (matches the 7 synthetic items).
+- **Links:** relates B009/D-SR24 (tag form); exposes B016 (anki-dependent tests were skipped, so this slipped through — add a non-skipped integration test).
+
+### B022 — Speedrun deck preset new/day = 100 is a dev placeholder (pacing TBD)
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-06-30 by Opus (seed-deck preset addition)
+- **Ref:** `tools/speedrun/deck/build_seed_deck.py` (`NEW_CARDS_PER_DAY`, `REVIEWS_PER_DAY`, the "LSAT Speedrun" preset)
+- **Context:** the builder now ships a dedicated preset at 100 new/day + 1000 rev/day to lift Anki's default 20/day cap so all 38 skills / 13 meta are available. The numbers are an arbitrary dev default — real new-card pacing for the skill-as-card model is a pedagogy/deck-config decision, not a fixed constant.
+- **Resolution:** revisit pacing when the engine (skill scheduling) lands; likely drive from deck options / FSRS rather than a hardcoded preset value.
+- **Links:** spec-engine; relates D-SR3.
+
+### B023 — Speedrun docs/data files are not dprint-formatted (blocks `just check`/`just fmt`)
+
+- **Type:** refactor · **Status:** open · **Severity:** low
+- **Discovered:** 2026-06-30 by Opus, first `just fmt` run after WP-2
+- **Ref:** `dprint check` lists 22 files under `docs/speedrun/**` (all `.md` + `data/*.json`), `docs/lsat-speedrun-brainlift.md`, and `tools/speedrun/{cardcheck/gold_set.json, deck/sample_items.json, eval/README.md, tagging/gold_labels.json}`.
+- **Context:** the entire Wave-1 docs/data tree was committed (f4fe85cc) without running dprint, so `just check`/`just fmt` fail on formatting before reaching tests — independent of any engine change. `.dprint.json` covers md/json/toml/ts/scss (not `.rs`/`.proto`); the WP-2 Rust + proto edits are verified clean (`cargo fmt --check`, `clang-format --dry-run -Werror` both pass).
+- **Resolution:** run `just fix-fmt` (`dprint fmt`) once over the speedrun tree and commit the (whitespace-only) reformat; ideally add a pre-commit/CI guard so new docs land formatted. Deferred here to avoid bundling 22 files of churn (incl. data-contract JSON) into the WP-2 change.
+- **Links:** relates B016 (test/format hygiene).
 
 ---
 

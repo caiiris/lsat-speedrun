@@ -64,6 +64,11 @@ service SchedulerService {
   // The number of days the calculated interval was fuzzed by on the previous
   // review (if any). Utilized by the FSRS add-on.
   rpc FuzzDelta(FuzzDeltaRequest) returns (FuzzDeltaResponse);
+  // Speedrun (WP-2/WP-3): given a due skill card, draw a fresh, unseen LSAT
+  // Item note from that skill's pool to render (the skill card is still the one
+  // answered). See docs/speedrun/spec-engine.md §5.2/§5.5.
+  rpc DrawItemForSkill(DrawItemForSkillRequest)
+      returns (DrawItemForSkillResponse);
 }
 
 // Implicitly includes any of the above methods that are not listed in the
@@ -75,6 +80,14 @@ service BackendSchedulerService {
   rpc FsrsBenchmark(FsrsBenchmarkRequest) returns (FsrsBenchmarkResponse);
   // Used for exporting revlogs for algorithm research.
   rpc ExportDataset(ExportDatasetRequest) returns (generic.Empty);
+}
+
+// Speedrun (WP-2/WP-3): fresh-item selection for a due skill card.
+message DrawItemForSkillRequest {
+  int64 skill_card_id = 1;
+}
+message DrawItemForSkillResponse {
+  int64 item_note_id = 1;
 }
 
 message SchedulingState {

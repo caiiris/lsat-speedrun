@@ -117,7 +117,9 @@ fn create_review_priority_fn(
         }
 
         // Not implemented yet
-        Added | ReverseAdded | RelativeOverdueness => None,
+        // (InterleavedSkills is a Speedrun queue-builder reordering (WP-4); it
+        // has no per-card FSRS-sim priority, so it is treated as unsupported.)
+        Added | ReverseAdded | RelativeOverdueness | InterleavedSkills => None,
     }
 }
 

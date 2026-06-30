@@ -11,8 +11,13 @@
 > change** and split into a phased build plan ([`build-plan.md`](./build-plan.md), WP-0…WP-19).
 > **Built so far** (all additive, tests green): WP-1 data contract (`docs/speedrun/data/` +
 > `tools/speedrun/deck/`), WP-12 AI card-check (`tools/speedrun/cardcheck/`), WP-16 eval
-> harnesses (`tools/speedrun/eval/`). **Engine/app code is NOT started yet** — gated on
-> WP-0 (fork + build), which is blocked here (see [B008](./backlog.md)).
+> harnesses (`tools/speedrun/eval/`). **The build env is now unblocked** ([B008](./backlog.md)
+> resolved): space-free path, Rust 1.92, `out/` build == HEAD, `anki` v26.05 imports, and the
+> whole offline suite is green (198 passed). **WP-0a (desktop build) is green**, and the
+> **WP-2 protobuf contract has landed** (`DrawItemForSkill` + `SkillMastery` + the
+> `REVIEW_CARD_ORDER_INTERLEAVED_SKILLS` variant; `todo!()`-style stubs; bindings regenerated
+> in Rust/Py/TS; full build green). **Engine logic (WP-3/4/5) is the next work.** WP-0b
+> (AnkiDroid build) still needs the dev's machine ([B001](./backlog.md)).
 >
 > This is the **Speedrun project's** front door. It is *not* the repo-root
 > `AGENTS.md` (that's upstream Anki's build doc → `CLAUDE.md`).
@@ -58,7 +63,7 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 
 ## Conventions that bite
 
-- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR27**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B021**).
+- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR27**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B024**).
 - **Frozen docs:** the PRD + specs are one-and-done. Don't edit them to track drift — record changes as a **new decision** + an **Overrides** line here.
 - **Engine invariants** (don't break these — they're the project's whole thesis + grade):
   - **Zero schema change.** Ride existing tables + `Card.custom_data`/tags; no schema-version bump (keeps sync/downgrade/`dbcheck` safe and upstream rebases cheap). [D-SR4]
@@ -69,15 +74,22 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 
 ## Current focus
 
-**Wave-1 offline tooling done** (WP-1/12/16). **Blocked on WP-0** (fork + desktop +
-AnkiDroid build) — must run on a **space-free path** with Rust installed ([B008](./backlog.md)).
-Once WP-0 is green: land **WP-2** (protobuf contract) → fan out engine lanes
-**WP-3/4/5** (worktrees) + **WP-6/WP-7**. Deadlines: **Wed** core (no AI) · **Fri**
-AI + sync · **Sun** prove + ship.
+**Wave-1 offline tooling done** (WP-1/12/16) and **green in this env** (198 passed, 1 skipped).
+**WP-0a (desktop build) green** + **WP-2 protobuf contract landed** — env unblocked
+([B008](./backlog.md) resolved). **Next: engine lanes** — **WP-3** (fresh-item selection,
+fills the `draw_item_for_skill` stub), **WP-4** (interleaving — honor the new
+`InterleavedSkills` order in `scheduler/queue/builder/{gathering,mod}.rs` + deck-options
+toggle in `ts/routes/deck-options/choices.ts`), **WP-5** (mastery — fills `skill_mastery`),
+then **WP-6/WP-7**; the proto stubs currently return an `invalid_input` error until
+implemented. **WP-0b (AnkiDroid build)** still needs the dev's machine ([B001](./backlog.md)).
+Deadlines: **Wed** core (no AI) · **Fri** AI + sync · **Sun** prove + ship.
 
-**Resolved this round:** D-SR18 (formula, math-verified) · B009 (native `::` tags → D-SR24,
-code fixed) · B010 (distractor traps schedulable → D-SR23). **Still open:** B013
-(`variant_of` field, for the engine/data WP) · B012 (real-LLM wiring — Friday).
+**Resolved this round:** B008 (build env unblocked — desktop builds, `anki` imports) ·
+B016 (deck-test fixture bug fixed; suite now 198 passed) · **WP-2 landed** (proto contract +
+stubs + regenerated bindings, build green). **New:** B023 (Wave-1 docs aren't dprint-formatted →
+`just check`/`just fmt` fail on pre-existing files; engine/proto edits verified format-clean).
+**Earlier:** D-SR18 · B009 (→D-SR24) · B010 (→D-SR23). **Still open:** B013 (`variant_of`) ·
+B012 (real-LLM — Friday) · B001 (mobile build).
 
 ---
 

@@ -2,6 +2,7 @@
 // License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 use crate::collection::Collection;
 use crate::error;
+use crate::invalid_input;
 use crate::revlog::RevlogReviewKind;
 
 impl crate::services::StatsService for Collection {
@@ -35,6 +36,16 @@ impl crate::services::StatsService for Collection {
         input: anki_proto::stats::GraphPreferences,
     ) -> error::Result<()> {
         self.set_graph_preferences(input)
+    }
+
+    /// Speedrun (WP-2 contract stub). The per-skill mastery aggregate is
+    /// implemented in WP-5 (`docs/speedrun/spec-engine.md` §5.4); this
+    /// placeholder keeps the generated service trait satisfied.
+    fn skill_mastery(
+        &mut self,
+        _input: anki_proto::stats::SkillMasteryRequest,
+    ) -> error::Result<anki_proto::stats::SkillMasteryResponse> {
+        invalid_input!("skill_mastery not implemented yet (WP-5)")
     }
 }
 

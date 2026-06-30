@@ -893,6 +893,9 @@ fn review_order_sql(order: ReviewCardOrder, timing: SchedTimingToday, fsrs: bool
         ReviewCardOrder::Random => vec![],
         ReviewCardOrder::Added => vec![ReviewOrderSubclause::Added],
         ReviewCardOrder::ReverseAdded => vec![ReviewOrderSubclause::ReverseAdded],
+        // Speedrun (WP-2 stub): the interleaving reordering happens in the
+        // queue builder (WP-4); the DB fetch falls back to due order for now.
+        ReviewCardOrder::InterleavedSkills => vec![ReviewOrderSubclause::Day],
     };
     subclauses.push(ReviewOrderSubclause::Random);
 

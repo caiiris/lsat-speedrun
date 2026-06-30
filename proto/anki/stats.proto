@@ -16,11 +16,28 @@ service StatsService {
   rpc Graphs(GraphsRequest) returns (GraphsResponse);
   rpc GetGraphPreferences(generic.Empty) returns (GraphPreferences);
   rpc SetGraphPreferences(GraphPreferences) returns (generic.Empty);
+  // Speedrun (WP-2/WP-5): per-skill mastery aggregate feeding the dashboard.
+  // See docs/speedrun/spec-engine.md §5.4/§5.5.
+  rpc SkillMastery(SkillMasteryRequest) returns (SkillMasteryResponse);
 }
 
 // Implicitly includes any of the above methods that are not listed in the
 // backend service.
 service BackendStatsService {}
+
+// Speedrun (WP-2/WP-5): per-skill mastery aggregate.
+message SkillMasteryRequest {
+  int64 deck_id = 1;
+}
+message SkillMastery {
+  string skill = 1;
+  uint32 mastered = 2;
+  uint32 total = 3;
+  float avg_recall = 4;
+}
+message SkillMasteryResponse {
+  repeated SkillMastery skills = 1;
+}
 
 message ReviewLogs {
   repeated CardStatsResponse.StatsRevlogEntry entries = 1;

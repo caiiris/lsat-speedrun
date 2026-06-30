@@ -32,9 +32,9 @@
 
 | WP | Title | Phase | Lane | Status |
 |---|---|---|---|---|
-| WP-0 | Fork + dual-platform build spine | 0 | Infra | not started |
-| WP-1 | Taxonomy + notetypes + seed deck (+weights) | 0 | Content | not started |
-| WP-2 | Protobuf interface contract | 0 | Contracts | not started |
+| WP-0 | Fork + dual-platform build spine | 0 | Infra | WP-0a desktop ✅ (B008) · WP-0b mobile pending (B001) |
+| WP-1 | Taxonomy + notetypes + seed deck (+weights) | 0 | Content | offline landed ✅ (tests green; real items pending B015) |
+| WP-2 | Protobuf interface contract | 0 | Contracts | landed ✅ (proto + stubs; bindings regen in Rust/Py/TS; builds green) |
 | WP-3 | Fresh-item selection (`draw_item_for_skill`) | 1 | Engine | not started |
 | WP-4 | Interleaving order (`ReviewCardOrder` variant) | 1 | Engine | not started |
 | WP-5 | Mastery query (`skill_mastery`) | 1 | Engine | not started |
@@ -43,12 +43,12 @@
 | WP-8 | AnkiDroid review loop | 1 | Mobile | not started |
 | WP-9 | Desktop installer (clean machine) | 1 | Packaging | not started |
 | WP-10 | Self-hosted sync + conflict/offline tests | 2 | Sync | not started |
-| WP-11 | AI tagging (anchor eval + baselines) | 2 | AI | not started |
-| WP-12 | AI-card-check + injection guard | 2 | AI | not started |
+| WP-11 | AI tagging (anchor eval + baselines) | 2 | AI | offline landed ✅ (stub LLM; real model pending B012/B018) |
+| WP-12 | AI-card-check + injection guard | 2 | AI | offline landed ✅ (stub LLM; real model pending B012) |
 | WP-13 | AI-off mode wiring | 2 | AI | not started |
 | WP-14 | Performance + Readiness + dashboard | 2 | Measurement | not started |
 | WP-15 | Mobile two-way sync + scores on phone | 2 | Mobile | not started |
-| WP-16 | Proof evals (calibration/paraphrase/leakage) | 3 | Evals | not started |
+| WP-16 | Proof evals (calibration/paraphrase/leakage) | 3 | Evals | offline harnesses landed ✅ (wiring gaps B013/B014) |
 | WP-17 | Interleaving ablation (3 builds) | 3 | Study-feature | not started |
 | WP-18 | One-command benchmark + perf targets | 3 | Bench | not started |
 | WP-19 | Packaging (APK/TestFlight + installer + crash) | 3 | Packaging | not started |
