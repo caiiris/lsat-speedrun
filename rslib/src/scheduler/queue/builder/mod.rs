@@ -301,6 +301,7 @@ mod test {
     use super::*;
     use crate::card::CardQueue;
     use crate::card::CardType;
+    use crate::scheduler::queue::builder::gathering::extract_question_type;
 
     impl Collection {
         fn set_deck_gather_order(&mut self, deck: &mut Deck, order: NewCardGatherPriority) {
@@ -542,5 +543,137 @@ mod test {
         CardAdder::new().deck(child.id).add(&mut col);
         col.set_current_deck(child.id).unwrap();
         assert_eq!(col.card_queue_len(), 0);
+    }
+
+    // -----------------------------------------------------------------------
+    // Speedrun WP-4: interleaved-skills ordering tests
+    // -----------------------------------------------------------------------
+
+    /// Helper: extract the `type::*` tag for a card from its note.
+    fn card_question_type(col: &mut Collection, card_id: CardId) -> String {
+        let card = col.storage.get_card(card_id).unwrap().unwrap();
+        let note = col.storage.get_note(card.note_id).unwrap().unwrap();
+        extract_question_type(&note.tags.join(" "))
+    }
+
+    /// Helper: add a review-due card whose note has a given `type::*` tag.
+    fn add_review_card_with_type(
+        col: &mut Collection,
+        deck_id: DeckId,
+        qtype: &str,
+        due: i32,
+    ) -> CardId {
+        let nt = col.get_notetype_by_name("Basic").unwrap().unwrap();
+        let mut note = nt.new_note();
+        note.set_field(0, format!("question type {qtype} due {due}")).unwrap();
+        note.tags = vec![format!("type::{}", qtype)];
+        col.add_note(&mut note, deck_id).unwrap();
+        let card_id = col
+            .storage
+            .get_card_by_ordinal(note.id, 0)
+            .unwrap()
+            .unwrap()
+            .id;
+        let mut card = col.storage.get_card(card_id).unwrap().unwrap();
+        card.due = due;
+        card.interval = 10;
+        card.ctype = CardType::Review;
+        card.queue = CardQueue::Review;
+        col.update_cards_maybe_undoable(vec![card], false).unwrap();
+        card_id
+    }
+
+    /// AC 1 (core): with `InterleavedSkills`, no two consecutive review cards
+    /// share the same question type (when the distribution permits it).
+    #[test]
+    fn interleaved_skills_no_consecutive_same_type() -> Result<()> {
+        let mut col = Collection::new();
+        let mut deck = col.get_or_create_normal_deck("Default")?;
+        col.set_deck_review_order(&mut deck, ReviewCardOrder::InterleavedSkills);
+
+        // 3 cards of "flaw" + 3 cards of "assumption" → should interleave
+        for i in 0..3 {
+            add_review_card_with_type(&mut col, deck.id, "flaw", -i);
+        }
+        for i in 0..3 {
+            add_review_card_with_type(&mut col, deck.id, "assumption", -i - 10);
+        }
+
+        let queue = col.build_queues(deck.id)?;
+        let card_ids: Vec<CardId> = queue.iter().map(|e| e.card_id()).collect();
+
+        assert_eq!(card_ids.len(), 6, "expected 6 review cards in queue");
+
+        let types: Vec<String> = card_ids
+            .iter()
+            .map(|&cid| card_question_type(&mut col, cid))
+            .collect();
+
+        for window in types.windows(2) {
+            assert_ne!(
+                window[0], window[1],
+                "consecutive same-type found: {:?}",
+                types
+            );
+        }
+        Ok(())
+    }
+
+    /// AC 1 (stock order = ablation control): a stock order must leave the
+    /// review ordering unchanged vs current Anki behaviour — due date then
+    /// random. We verify that `Day` order is deterministic by due date first.
+    #[test]
+    fn stock_order_unaffected_by_interleaving() -> Result<()> {
+        let mut col = Collection::new();
+        let mut deck = col.get_or_create_normal_deck("Default")?;
+        col.set_deck_review_order(&mut deck, ReviewCardOrder::Day);
+
+        // Add cards with distinct due dates so ordering is deterministic.
+        add_review_card_with_type(&mut col, deck.id, "flaw", -100);
+        add_review_card_with_type(&mut col, deck.id, "flaw", -50);
+        add_review_card_with_type(&mut col, deck.id, "flaw", 0);
+
+        let queue = col.build_queues(deck.id)?;
+        let dues: Vec<i32> = queue
+            .iter()
+            .map(|e| {
+                col.storage
+                    .get_card(e.card_id())
+                    .unwrap()
+                    .unwrap()
+                    .due
+            })
+            .collect();
+
+        // Day order = ascending due, so earliest-due comes first (most negative)
+        assert_eq!(dues, vec![-100, -50, 0]);
+        Ok(())
+    }
+
+    /// Edge case: single question type → all cards are same type; interleaving
+    /// cannot separate them, but the queue must still contain all cards.
+    #[test]
+    fn interleaved_skills_single_type_all_cards_present() -> Result<()> {
+        let mut col = Collection::new();
+        let mut deck = col.get_or_create_normal_deck("Default")?;
+        col.set_deck_review_order(&mut deck, ReviewCardOrder::InterleavedSkills);
+
+        for i in 0..4 {
+            add_review_card_with_type(&mut col, deck.id, "flaw", -i);
+        }
+
+        let queue = col.build_queues(deck.id)?;
+        assert_eq!(queue.iter().count(), 4, "all 4 cards must remain in queue");
+        Ok(())
+    }
+
+    /// `extract_question_type` unit test: parses `type::*` from tag strings.
+    #[test]
+    fn extract_question_type_parses_correctly() {
+        assert_eq!(extract_question_type(" type::flaw skill::conditional "), "flaw");
+        assert_eq!(extract_question_type("skill::conditional type::assumption"), "assumption");
+        assert_eq!(extract_question_type("no-type-tag here"), "");
+        assert_eq!(extract_question_type(""), "");
+        assert_eq!(extract_question_type("type::"), "");
     }
 }

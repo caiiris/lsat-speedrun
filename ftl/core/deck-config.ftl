@@ -243,6 +243,8 @@ deck-config-sort-order-descending-difficulty = Difficult cards first
 deck-config-sort-order-retrievability-ascending = Ascending retrievability
 # Sort the cards by retrievability percentage, in descending order (100% to 0%, most easily retrievable to least retrievable).
 deck-config-sort-order-retrievability-descending = Descending retrievability
+# Speedrun: interleave due skill cards so no two consecutive cards share the same LSAT question type (round-robin across types).
+deck-config-sort-order-interleaved-skills = Interleaved skills (Speedrun)
 
 ## Timer section
 
