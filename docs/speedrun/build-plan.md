@@ -38,8 +38,8 @@
 | WP-3 | Fresh-item selection (`draw_item_for_skill`) | 1 | Engine | landed ✅ (merged to main; 7 unit tests; difficulty deferred B024, sidecar B025) |
 | WP-4 | Interleaving order (`ReviewCardOrder` variant) | 1 | Engine | landed ✅ (merged; 4 unit tests; deck-options toggle) |
 | WP-5 | Mastery query (`skill_mastery`) | 1 | Engine | landed ✅ (merged; 3 unit tests; threshold 0.90 D-SR28) |
-| WP-6 | Desktop reviewer (commit-then-reveal + draw) | 1 | Desktop-Reviewer | not started |
-| WP-7 | Memory score + give-up gate | 1 | Measurement | not started |
+| WP-6 | Desktop reviewer (commit-then-reveal + draw) | 1 | Desktop-Reviewer | landed ✅ (merged; L1 done 35 tests; L2 wired — needs live-GUI verify; render via Python injection D-SR30) |
+| WP-7 | Memory score + give-up gate | 1 | Measurement | landed ✅ (merged; readiness_gate + Memory, 13 tests; Python exposure → WP-14 B031) |
 | WP-8 | AnkiDroid review loop | 1 | Mobile | not started |
 | WP-9 | Desktop installer (clean machine) | 1 | Packaging | not started |
 | WP-10 | Self-hosted sync + conflict/offline tests | 2 | Sync | not started |
@@ -290,14 +290,14 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 - **Parallel-safe with:** WP-3, WP-4.
 
 ### WP-6 — Desktop reviewer: commit-then-reveal + drawn-item render
-- **Lane:** Desktop-Reviewer · **Depends on:** WP-1; WP-3 (for Level 2); WP-4 (interleave) · **Status:** not started
+- **Lane:** Desktop-Reviewer · **Depends on:** WP-1; WP-3 (for Level 2); WP-4 (interleave) · **Status:** done (merged to main 2026-06-30; `qt/aqt/speedrun.py` + `reviewer.py` + 35 tests). Level 1 solid; Level 2 wired but **needs live-GUI verification**. Renders via Python field injection, not the RPC → D-SR30/B029. Follow-ups B027/B028/B030.
 - **Goal:** **Level 1** first (commit-then-reveal over real item-cards, interleaved), then **Level 2** (skill card + `draw_item_for_skill` + render drawn item via `RenderUncommittedCard`, answer the skill card). Reveal key + per-choice why-wrong + trap.
 - **Touches:** `qt/aqt/reviewer.py`, `ts/reviewer/`.
 - **Acceptance:** spec-engine AC 1/2/§6; PRD AC 9.A; risk [B002].
 - **Parallel-safe with:** WP-8 (mobile), Measurement.
 
 ### WP-7 — Memory score + give-up gate
-- **Lane:** Measurement · **Depends on:** WP-1; WP-5 (inputs) · **Status:** not started
+- **Lane:** Measurement · **Depends on:** WP-1; WP-5 (inputs) · **Status:** done (merged to main 2026-06-30; `rslib/src/stats/measurement.rs`, 13 tests). `readiness_gate` pure fn + Memory (bootstrap band, D-SR29). Memory Python/dashboard exposure deferred → WP-14 (B031).
 - **Goal:** Memory score (mean FSRS recall over meta cards + bootstrap band) + the **pure-function `readiness_gate`** in Rust with unit tests. (Performance/Readiness full impl is WP-14.)
 - **Touches:** new `rslib/src/` measurement module (or `stats/`), `pylib`.
 - **Acceptance:** spec-measurement AC 1 (Memory), AC 2 (gate `(199,0.49)→Abstain`, `(200,0.50)→Eligible`); PRD AC 9.C(13); D-SR10.

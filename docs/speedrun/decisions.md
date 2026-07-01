@@ -27,6 +27,7 @@
 | Ops | D-SR16 | Doc home |
 | Build · wave 1 | D-SR17–D-SR26 | taxonomy, readiness, card-check, leakage, trap scheduling, tag form, tagging eval |
 | Build · wave 2 (engine) | D-SR27, D-SR28 | skill-identity resolution, mastery threshold |
+| Build · wave 3 (measure/reviewer) | D-SR29, D-SR30 | Memory band + exposure, drawn-item render mechanism |
 
 ---
 
@@ -285,6 +286,30 @@
 - **Considered:** 0.80 (marginally-learned skills count → inflates the dashboard), 0.95 (too strict early).
 - **Gaps / risks:** a judgment line, not calibrated from real data — revisit with WP-7 (Memory) / the calibration eval; single-line change if it needs tuning.
 - **Ref:** `rslib/src/stats/service.rs` (`MASTERY_RECALL_THRESHOLD`), spec-engine §5.4, D-SR5; inbox WP-5 L1/L6.
+
+---
+
+> **Build · wave 3 (measurement + reviewer, D-SR29–D-SR30)** — promoted from the WP-6/WP-7
+> build agents (2026-06-30), after their branches merged to `main`.
+
+### D-SR29 — Memory band = 1000-resample bootstrap; Python/dashboard exposure deferred to WP-14
+
+- **Status:** resolved (compute) / deferred (exposure)
+- **Decided:** 2026-06-30, WP-7 build agent (inbox L1/L2)
+- **Chose:** Memory score (spec-measurement §4.1) = mean FSRS recall over `LSAT Meta` cards; **band = 95% percentile bootstrap CI, 1000 resamples, fixed seed** (deterministic). Unreviewed Meta cards contribute recall 0.0 (mirrors D-SR28 / WP-5). The computation lives in Rust (`memory_score_impl`), but **exposing it to Python is deferred to WP-14**: a `MetaMemory` proto RPC would need a full rebuild and collide with parallel proto regen, and WP-14 (dashboard) already depends on WP-7, so it adds the RPC there at zero extra cost.
+- **Considered:** analytic normal CI (wrong for small, bounded recall samples); adding the proto RPC now (build + merge-coordination cost with no consumer yet).
+- **Gaps / risks:** until WP-14, Memory is Rust-only (not callable from pylib) → tracked B031.
+- **Ref:** `rslib/src/stats/measurement.rs`, spec-measurement §4.1 / AC 1, D-SR5; inbox WP-7 L1/L2.
+
+### D-SR30 — Level-2 drawn item rendered via Python field injection, not `RenderUncommittedCard` — **Overrides spec-engine §8 (render mechanism)**
+
+- **Status:** resolved (v1) — revisit for AnkiDroid parity
+- **Decided:** 2026-06-30, WP-6 build agent (inbox L5)
+- **Chose:** The desktop reviewer renders the drawn item by reading its note fields in Python and injecting HTML via `web.eval()`, rather than the `RenderUncommittedCard`/`RenderExistingCard` RPCs that spec-engine §8 named. Functionally equivalent for v1 and simpler (no TS rebuild); **render-source and answer-target stay decoupled**, so the [B002] invariant (the *skill card* is answered via the unchanged path) is still honored.
+- **Considered:** the §8 RPC path (the "verified feasible" mechanism) — deferred because field injection landed faster and the answer pipeline is untouched either way.
+- **Gaps / risks:** AnkiDroid (WP-8/WP-15) can't reuse a Python-only render → mobile needs either the RPC path or its own injection; revisit for cross-platform parity (→ B029). Overrides spec-engine §8's stated *mechanism*, not its intent.
+- **Overrides:** spec-engine §8 (see `AGENTS.md` → "Overrides since the plan").
+- **Ref:** `qt/aqt/speedrun.py`, `qt/aqt/reviewer.py`, spec-engine §8, D-SR3; inbox WP-6 L5; B029.
 
 ---
 

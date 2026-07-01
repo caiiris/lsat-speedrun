@@ -17,7 +17,7 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B031 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
 | fixed / done | B008, B009, B010, B021 |
 
@@ -276,6 +276,51 @@
 - **Context:** on the merged engine tree `just build`, `just test-rust`, and `just test-py` are **all green**, but the full `just check` still fails on pre-existing formatting/lint of Wave-1 files: dprint on docs (B023), ruff on `tools/speedrun`, and mypy on `build_seed_deck.py` / `test_build_deck.py`. **None are introduced by the engine WPs** — verified by all three lanes.
 - **Resolution:** `just fix-fmt` / `just fix-lint`, fix the mypy annotations on the Wave-1 tooling, and wire `out/pylib` into the tools-test pythonpath (relates B016) so a clean `just check` gates future work.
 - **Links:** B023 (dprint), B016 (test hygiene).
+
+### B027 — Reviewer: no keyboard shortcut to commit an answer (mouse-only choice select)
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-6 build agent (inbox B-WP6-001)
+- **Ref:** `qt/aqt/reviewer.py` (`onEnterKey`), `qt/aqt/speedrun.py`
+- **Context:** in the Speedrun commit-then-reveal surface, choices A–E are selected by click (`pycmd('speedrun:commit:X')`); there's no 1–5 / A–E keyboard shortcut to commit. Enter/Space are (correctly) blocked before commit and submit Continue after.
+- **Resolution:** add key handlers (1–5) that map to commit before reveal.
+- **Links:** WP-6; spec-engine §6.
+
+### B028 — Reviewer: empty item pool falls back silently (no user-visible signal)
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-6 build agent (inbox B-WP6-002)
+- **Ref:** `qt/aqt/reviewer.py` (`_speedrun_draw_item_fields`)
+- **Context:** for a Level-2 skill card, if `draw_item_for_skill` errors or the pool is empty, the reviewer silently falls back to normal rendering. Safe, but the user gets no signal that the skill is uncovered.
+- **Resolution:** surface an "uncovered skill / empty pool" message (ties into the coverage/abstain UX).
+- **Links:** WP-6; B007/B015 (thin pools); spec-engine §9.
+
+### B029 — Level-2 render uses Python field injection, not the `RenderUncommittedCard` RPC
+
+- **Type:** issue · **Status:** open (v1 accepted → D-SR30) · **Severity:** medium
+- **Discovered:** 2026-06-30 by WP-6 build agent (inbox B-WP6-003 / L5)
+- **Ref:** `qt/aqt/speedrun.py`, `qt/aqt/reviewer.py`; spec-engine §8; D-SR30
+- **Context:** WP-6 injects drawn-item HTML from Python (`web.eval`) instead of the §8 render RPCs. Works on desktop, but AnkiDroid can't reuse a Python-only path → cross-platform parity risk for WP-8/WP-15.
+- **Resolution:** for mobile, either wire the `RenderUncommittedCard` RPC path (shared engine) or reimplement injection in the AnkiDroid reviewer; decide during WP-8.
+- **Links:** D-SR30; B002; WP-8/WP-15.
+
+### B030 — Reviewer: auto-advance disabled for Speedrun cards (Continue-only)
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-6 build agent (inbox B-WP6-004)
+- **Ref:** `qt/aqt/reviewer.py` (`_showEaseButtons` → single Continue)
+- **Context:** Speedrun review replaces the 4-ease panel with a single Continue button (ease derived from correctness, spec §5.1); any user auto-advance / typed-answer preferences are effectively disabled on these cards.
+- **Resolution:** confirm this is the desired UX; if not, honor the auto-advance settings.
+- **Links:** WP-6; spec-engine §5.1/§6.
+
+### B031 — Memory score not yet callable from Python (Rust-only until WP-14)
+
+- **Type:** issue · **Status:** open (planned in WP-14) · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-7 build agent (inbox L1)
+- **Ref:** `rslib/src/stats/measurement.rs` (`memory_score_impl`); D-SR29
+- **Context:** `memory_score_impl` is implemented + tested in Rust but has no proto RPC / pylib wrapper, so the dashboard/Python can't call it yet. Deferred to WP-14 (adds the `MetaMemory` RPC there to avoid duplicate rebuilds / merge churn).
+- **Resolution:** add the `MetaMemory` (or equivalent) RPC + pylib wrapper in WP-14.
+- **Links:** D-SR29; WP-14; spec-measurement §4.1.
 
 ---
 
