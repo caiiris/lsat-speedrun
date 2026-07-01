@@ -17,7 +17,7 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038, B040 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
 | fixed / done | B008, B009, B010, B021, B031, B034, B035, B037, B039 |
 
@@ -397,6 +397,15 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 - **Context:** WP-24 first *hid* Anki's toolbar, which risked losing access to Browse/Add/Stats/Sync. **Fixed (2026-07-01):** the toolbar is no longer hidden — the maximized Speedrun Home merely *covers* the main window, so **closing the Home reveals full, functional Anki** (nothing lost). Remaining nicety: so the user rarely needs to leave Speedrun, surface **Sync + Browse** as buttons inside the Home shell itself.
 - **Resolution:** add Home buttons / a minimal Speedrun bar for Sync + Browse (→ `mw.onSync` / `mw.onBrowse`); optional.
 - **Links:** D-SR36; WP-24; spec-ui §2.
+
+### B040 — Shell shows TWO windows (Home dialog + Anki main); closing Anki main quits both
+
+- **Type:** bug · **Status:** open (WP-26 in progress) · **Severity:** high
+- **Discovered:** 2026-07-01 by owner
+- **Ref:** `qt/aqt/speedrun_home.py` (`SpeedrunHomeDialog` — a top-level QDialog), `qt/aqt/main.py` (`_speedrun_auto_open_home`)
+- **Context:** WP-24 opens the Home as a **separate maximized dialog on top of** the `AnkiQt` main window (still in the deck-browser state), so **two windows** appear; the main window is the real app, so closing it quits everything while closing the Home only closes the dialog. Not a true single-window shell.
+- **Resolution (WP-26):** render the Speedrun Home **as the main window's content** (`mw.web`) as the launch state (whitelist `/_anki/speedrunDashboard` for the main webview; move the Home pycmd bridge to `mw`), so there's exactly one window and closing it quits normally. Fallback: hide `mw` + route Home-close→quit.
+- **Links:** D-SR36/D-SR37; WP-24/WP-26.
 
 ---
 
