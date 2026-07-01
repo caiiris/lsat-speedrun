@@ -82,6 +82,16 @@ from aqt.webview import AnkiWebView, AnkiWebViewKind
 
 install_pylib_legacy()
 
+# ---------------------------------------------------------------------------
+# WP-24: Speedrun full-window shell.
+# Set to False to restore stock Anki chrome (deck browser + top toolbar).
+# When True: Speedrun Home opens maximised on profile load; Anki's top
+# toolbar is hidden while the deck-browser state is active; the window title
+# reads "Speedrun".  Browse + Sync remain reachable via the native macOS/OS
+# menu bar (Tools → Browse, keyboard shortcut Y for Sync, B for Browse).
+# ---------------------------------------------------------------------------
+SPEEDRUN_SHELL: bool = True
+
 MainWindowState = Literal[
     "startup", "deckBrowser", "overview", "review", "resetRequired", "profileManager"
 ]
@@ -506,7 +516,8 @@ class AnkiQt(QMainWindow):
         restoreGeom(self, "mainWindow")
         restoreState(self, "mainWindow")
         # titlebar
-        self.setWindowTitle(f"{self.pm.name} - Anki")
+        app_name = "Speedrun" if SPEEDRUN_SHELL else "Anki"
+        self.setWindowTitle(f"{self.pm.name} - {app_name}")
         # show and raise window for osx
         self.show()
         self.activateWindow()
@@ -663,6 +674,9 @@ class AnkiQt(QMainWindow):
             gui_hooks.collection_did_load(self.col)
             self.apply_collection_options()
             self.moveToState("deckBrowser")
+            # WP-24: Speedrun shell — open Home as the primary surface on launch
+            if SPEEDRUN_SHELL:
+                self.progress.single_shot(200, self._speedrun_auto_open_home, False)
         except Exception:
             # dump error to stderr so it gets picked up by errors.py
             traceback.print_exc()
@@ -771,6 +785,17 @@ class AnkiQt(QMainWindow):
 
     def _deckBrowserState(self, oldState: MainWindowState) -> None:
         self.deckBrowser.show()
+        if SPEEDRUN_SHELL:
+            # WP-24: hide Anki's top toolbar; Speedrun Home is the primary surface.
+            # Browse (B) and Sync (Y) remain accessible via keyboard shortcuts and
+            # the native OS menu bar (Tools menu).
+            self.toolbarWeb.setVisible(False)
+
+    def _deckBrowserCleanup(self, newState: MainWindowState) -> None:
+        if SPEEDRUN_SHELL:
+            # WP-24: restore toolbar visibility before entering any other state
+            # (review, overview, etc.) that may need it.
+            self.toolbarWeb.setVisible(True)
 
     def _selectedDeck(self) -> DeckDict | None:
         did = self.col.decks.selected()
@@ -1491,8 +1516,13 @@ title="{}" {}>{}</button>""".format(
         """Open the Speedrun Home study-plan screen (WP-20)."""
         aqt.dialogs.open("SpeedrunHome", self)
 
+    def _speedrun_auto_open_home(self) -> None:
+        """WP-24: Auto-open Speedrun Home maximised as the primary surface on profile load."""
+        dialog = aqt.dialogs.open("SpeedrunHome", self)
+        dialog.showMaximized()
+
     def updateTitleBar(self) -> None:
-        self.setWindowTitle("Anki")
+        self.setWindowTitle("Speedrun" if SPEEDRUN_SHELL else "Anki")
 
     # View
     ##########################################################################
