@@ -17,7 +17,7 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
 | fixed / done | B008, B009, B010, B021, B031, B034, B035, B037 |
 
@@ -379,6 +379,15 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 - **Context:** Anki only injects the `Authorization: Bearer <apikey>` header (required by mediasrv `_have_api_access`) for webviews whose `kind` is in `have_api_access`. WP-20's Home dialog used `AnkiWebViewKind.MAIN`, which is **not** API-enabled, so the dashboard RPC POST was rejected with 403.
 - **Resolution (2026-07-01):** added `AnkiWebViewKind.SPEEDRUN_HOME`, included it in the `have_api_access` set, and switched `speedrun_home.py` to that kind. **Lesson:** any Anki webview that calls backend RPCs must use an API-enabled kind.
 - **Links:** B034/B035 (same chain — WP-20 Home never worked over the web until GUI-tested); WP-14/WP-20; feeds WP-24.
+
+### B038 — Home Memory card shows "No meta cards yet" despite 13 LSAT Meta cards
+
+- **Type:** bug · **Status:** open · **Severity:** low
+- **Discovered:** 2026-07-01 by owner (Home rendered; Memory card says "No meta cards yet")
+- **Ref:** `rslib/src/stats/measurement.rs` (`memory_score_impl` / `meta_cards_in_decks`), `SpeedrunDashboard` RPC; `ts/routes/speedrun-dashboard/SpeedrunDashboard.svelte`
+- **Context:** the profile's `LSAT Speedrun::Meta` deck has 13 Meta cards, but the Home's Memory card renders the empty state. Likely the `deck_id` passed to the dashboard doesn't include the Meta subdeck (deck-children handling), or `memory_score_impl` returns None when no reviews exist and the UI treats that as "no cards." Investigate: confirm the deck_id (parent vs subdeck) + whether Memory should show a 0-review state vs "no cards."
+- **Resolution:** confirm deck-children inclusion in the memory query; distinguish "no meta cards" from "meta cards exist but unreviewed" in the response/UI.
+- **Links:** D-SR29 (Memory), D-SR32 (dashboard RPC); WP-14/WP-20.
 
 ---
 
