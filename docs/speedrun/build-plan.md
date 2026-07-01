@@ -56,6 +56,7 @@
 | WP-21 | Drill interaction surface (prephrase + name-the-trap; reshape WP-6) | UX | Desktop-Reviewer | landed ✅ (merged; prephrase + name-the-trap + de-Anki chrome; reasoning-map deferred B033; stale WP-6 tests fixed) |
 | WP-22 | Session layer + result/blind-review (drills/mixed/timed) | UX | Desktop-UI | next up |
 | WP-23 | RC passage workspace | UX | Desktop-UI | deferred (phase-2) |
+| WP-24 | Full-window Speedrun shell (hide Anki chrome; Home on launch) | UX | Desktop-UI | next up (D-SR36) |
 
 ## Dependency graph
 
@@ -455,6 +456,14 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 - **Lane:** Desktop-UI · **Depends on:** WP-21, RC content · **Status:** deferred
 - **Goal:** Passage + question-set **workspace** (spec-ui §3.4) under the same draw model
   (reading pane + annotation beside commit-then-reveal). Design captured; build in phase-2 with RC items (D-SR12).
+
+### WP-24 — Full-window Speedrun shell (chrome replacement) — D-SR36
+- **Lane:** Desktop-UI · **Depends on:** WP-20 (home), WP-21 (drill), WP-22 (sessions) · **Status:** next up
+- **Goal:** Make the app **open into Speedrun Home** (not the deck browser), **hide/replace Anki's top toolbar + deck browser**, and route all studying through Speedrun sessions/drill so it stops reading as Anki (D-SR36). Keep sync/browse reachable via a minimal Speedrun bar or the native menu. **Presentation only** — wrap/hide the Anki main-window states, don't remove them; a flag restores stock Anki.
+- **Touches:** `qt/aqt/main.py` (launch state + toolbar), `qt/aqt/toolbar.py`, `qt/aqt/deckbrowser.py` (hide/replace), `ts/` (shell chrome), `qt/aqt/speedrun_home.py`.
+- **Acceptance:** `just run` opens Speedrun Home as the main surface; Anki's toolbar/deck-list hidden or replaced; study flows through the drill; sync/browse still reachable; stock Anki review of non-Speedrun profiles unaffected (shell flag); build + `just test-ts`/`test-py` green; **live-GUI verified by owner**.
+- **Sequencing:** land **after WP-22** (both touch home/reviewer/main-window area) to avoid collisions.
+- **Risk:** highest presentation risk (Anki main-window state machine). [relates D-SR30/B002]
 
 ---
 

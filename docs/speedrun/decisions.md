@@ -29,7 +29,7 @@
 | Build · wave 2 (engine) | D-SR27, D-SR28 | skill-identity resolution, mastery threshold |
 | Build · wave 3 (measure/reviewer) | D-SR29, D-SR30 | Memory band + exposure, drawn-item render mechanism |
 | Build · wave 4 (dashboard) | D-SR31, D-SR32 | revlog ease→outcome mapping, Readiness band/confidence/coverage method |
-| Product · UX reframe | D-SR33, D-SR34, D-SR35 | presentation reframe (study-plan, not a deck), LR drill interaction model, session/review flow |
+| Product · UX reframe | D-SR33, D-SR34, D-SR35, D-SR36 | presentation reframe, LR drill interaction, session/review flow, full-window shell |
 
 ---
 
@@ -381,6 +381,15 @@
 - **Considered:** Anki's infinite due-queue (rejected — it *is* the deck feel we're removing); fixed full-section-only (too rigid for daily practice).
 - **Gaps / risks:** session sizes/mode thresholds are judgment calls (relate B022 pacing); session misses are tracked **session-local**; flagged items persist via `Card.custom_data` only if needed (no schema change). Session accuracy is **display-only** — Memory/Performance/Readiness still come from the engine (revlog + `SpeedrunDashboard`), never from this screen.
 - **Ref:** [`spec-ui.md`](./spec-ui.md) §3.3, spec-engine §5.2/§5.3, D-SR6/D-SR9/D-SR33; relates B022.
+
+### D-SR36 — Speedrun is a full-window shell that hides Anki's default UI (refines D-SR33)
+
+- **Status:** resolved (direction) — build = WP-24
+- **Decided:** 2026-07-01 by owner (after the first cut still "looked like Anki")
+- **Chose:** The reframe's first cut (WP-20/21) *extended* Anki — an opt-in Tools→"Speedrun Home" menu + a reviewer that only changes on skill cards — leaving Anki's deck browser, top toolbar, "Show Answer" chrome, and plain meta flashcards front-and-center, so it still reads as Anki. Instead, make Speedrun a **full-window shell**: **open Speedrun Home as the main surface on launch**, **hide/replace Anki's top toolbar + deck browser**, and **route all studying through Speedrun sessions/drill**. Essential functions (sync, browse) stay reachable via a minimal Speedrun bar or the native menu. Still **presentation-only** — the Anki windows/state machine are wrapped/hidden, not removed, and the engine/FSRS/scores/sync are untouched (a flag can restore stock Anki).
+- **Considered:** the opt-in menu + extended reviewer (WP-20/21 as first built — too timid; still feels like Anki); a separate standalone app embedding the Rust engine (too heavy for the week, loses the fork thesis).
+- **Gaps / risks:** touches Anki's **main-window state machine + toolbar** — the riskiest presentation change so far; must keep Browse/Sync/Add reachable; must not break normal Anki when the shell is off; verify on a real GUI (headless can't).
+- **Ref:** [`spec-ui.md`](./spec-ui.md), D-SR33; build = WP-24.
 
 ---
 
