@@ -177,6 +177,7 @@
 - **Discovered:** 2026-06-30 by WP-1 build agent (inbox L11)
 - **Ref:** `docs/speedrun/data/weights.json`; spec-engine §9
 - **Context:** seed uses `MIN_POOL_SIZE_SEED=3` with 7 synthetic items → only 3/13 types covered at the production threshold (10). Real items (D-SR11) needed for real coverage.
+- **Update (2026-06-30, Opus):** `sample_items.json` expanded to **39 synthetic items (3 per all 13 `type::*`)** so seed coverage is now **13/13 at `MIN_POOL_SIZE_SEED=3`** — this makes Level-2 `draw_item_for_skill` work for every question type in the demo. Still **synthetic** and still below the production threshold of 10, so this does not close the gap; real items (D-SR11) remain required.
 - **Resolution:** recompute coverage vs production threshold once real items are imported; show per-skill pool sizes on the dashboard.
 - **Links:** B007, D-SR11.
 
