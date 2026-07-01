@@ -17,9 +17,9 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038, B040 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038, B041 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
-| fixed / done | B008, B009, B010, B021, B031, B034, B035, B037, B039 |
+| fixed / done | B008, B009, B010, B021, B031, B034, B035, B037, B039, B040 |
 
 ---
 
@@ -400,12 +400,21 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 
 ### B040 — Shell shows TWO windows (Home dialog + Anki main); closing Anki main quits both
 
-- **Type:** bug · **Status:** open (WP-26 in progress) · **Severity:** high
+- **Type:** bug · **Status:** fixed (WP-26) · **Severity:** high
 - **Discovered:** 2026-07-01 by owner
 - **Ref:** `qt/aqt/speedrun_home.py` (`SpeedrunHomeDialog` — a top-level QDialog), `qt/aqt/main.py` (`_speedrun_auto_open_home`)
 - **Context:** WP-24 opens the Home as a **separate maximized dialog on top of** the `AnkiQt` main window (still in the deck-browser state), so **two windows** appear; the main window is the real app, so closing it quits everything while closing the Home only closes the dialog. Not a true single-window shell.
 - **Resolution (WP-26):** render the Speedrun Home **as the main window's content** (`mw.web`) as the launch state (whitelist `/_anki/speedrunDashboard` for the main webview; move the Home pycmd bridge to `mw`), so there's exactly one window and closing it quits normally. Fallback: hide `mw` + route Home-close→quit.
 - **Links:** D-SR36/D-SR37; WP-24/WP-26.
+
+### B041 — Home dashboard doesn't auto-refresh after a session closes
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-07-01 by WP-26 build agent (inbox L5)
+- **Ref:** `qt/aqt/main.py` (`_speedrunHomeState`, `_speedrun_open_session`), `ts/routes/speedrun-dashboard/`
+- **Context:** with the single-window shell, the Home lives in `mw.web`; when a `SpeedrunSessionDialog` closes, the Home page isn't reloaded, so the scores/skill-map can be stale until the user presses `Ctrl+Shift+H` (which re-loads the state).
+- **Resolution:** on session-dialog close, signal the Home to reload (re-`moveToState("speedrunHome")` or a JS refresh hook).
+- **Links:** WP-26; D-SR37; WP-22.
 
 ---
 

@@ -73,7 +73,7 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 
 ## Conventions that bite
 
-- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR38**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B041**).
+- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR38**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B042**).
 - **Frozen docs:** the PRD + specs are one-and-done. Don't edit them to track drift — record changes as a **new decision** + an **Overrides** line here.
 - **Engine invariants** (don't break these — they're the project's whole thesis + grade):
   - **Zero schema change.** Ride existing tables + `Card.custom_data`/tags; no schema-version bump (keeps sync/downgrade/`dbcheck` safe and upstream rebases cheap). [D-SR4]
@@ -100,7 +100,9 @@ layer; all additive. Design mockups in `docs/speedrun/assets/`. **Landed (all me
 `just test-ts`/`test-py` green):** **WP-20** Home, **WP-21** drill (prephrase + name-the-trap), **WP-22**
 session layer (drills/mixed/timed/blind + result), **WP-24** full-window shell (`SPEEDRUN_SHELL` flag:
 Home on launch + Anki chrome hidden), **WP-25** Home-as-hub (Sync/Browse/Add/Stats/More surfaced in the
-Home → the deck browser is never a user surface, D-SR37). The Home renders + matches the mockup (its earlier "blank/awful" was
+Home → the deck browser is never a user surface, D-SR37), **WP-26** single-window shell (Home is a
+main-window state in `mw.web`, not a dialog → exactly one window, closing it quits cleanly; B040 fixed).
+**Desktop app is now a single-window, self-contained Speedrun product** (pending owner GUI-verify). The Home renders + matches the mockup (its earlier "blank/awful" was
 three GUI-only bugs B034/B035/B037, all fixed). **Desktop UX reframe is functionally complete — pending
 owner GUI-verify.** Open polish: B033 (reasoning-map/marked-conclusion field), B036 (session filter/state),
 B038 (Home Memory "no meta cards"), B039 (Sync/Browse button in shell).
