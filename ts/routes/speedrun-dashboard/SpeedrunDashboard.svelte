@@ -98,6 +98,35 @@ Honesty invariants (D-SR10, spec-measurement §6):
         return b.attempts - a.attempts;
     });
 
+    // ── Anki action bridge (WP-25) ────────────────────────────────────────────
+    // Each function calls pycmd('speedrun:anki:<action>'), handled in
+    // SpeedrunHomeDialog._on_bridge_cmd, which routes to the matching mw.*
+    // method (opens the Anki dialog on top of Home; closing returns to Home).
+
+    function ankiAction(action: string) {
+        if (typeof window !== "undefined" && (window as any).pycmd) {
+            (window as any).pycmd(`speedrun:anki:${action}`);
+        } else {
+            console.info("[WP-25] anki action:", action);
+        }
+    }
+
+    // More menu open/close state
+    let moreOpen = false;
+
+    function toggleMore() {
+        moreOpen = !moreOpen;
+    }
+
+    function closeMore() {
+        moreOpen = false;
+    }
+
+    function moreAction(action: string) {
+        moreOpen = false;
+        ankiAction(action);
+    }
+
     // ── Session launcher bridge (WP-22 SEAM) ─────────────────────────────────
     // WP-22 will wire these to real session flows. For now, the Start drill
     // button emits a pycmd bridge command that the Qt host can handle.
@@ -140,6 +169,133 @@ Honesty invariants (D-SR10, spec-measurement §6):
     <!-- ── Top header ────────────────────────────────────────────────────── -->
     <header class="sr-home-header">
         <span class="sr-brand">Speedrun</span>
+
+        <!-- ── Anki action controls (WP-25) ─────────────────────────────── -->
+        <nav class="sr-anki-actions" aria-label="Anki tools">
+            <button
+                class="sr-action-btn"
+                on:click={() => ankiAction("sync")}
+                title="Sync with AnkiWeb"
+                aria-label="Sync"
+            >
+                <svg class="sr-action-icon" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M4 10a6 6 0 0 1 10.9-3.4"/>
+                    <polyline points="13,3 15.9,6.6 12.3,7.5"/>
+                    <path d="M16 10a6 6 0 0 1-10.9 3.4"/>
+                    <polyline points="7,17 4.1,13.4 7.7,12.5"/>
+                </svg>
+                <span class="sr-action-label">Sync</span>
+            </button>
+
+            <button
+                class="sr-action-btn"
+                on:click={() => ankiAction("browse")}
+                title="Browse cards"
+                aria-label="Browse"
+            >
+                <svg class="sr-action-icon" viewBox="0 0 20 20" aria-hidden="true">
+                    <rect x="3" y="4" width="14" height="12" rx="1.5"/>
+                    <line x1="3" y1="8" x2="17" y2="8"/>
+                    <line x1="7" y1="4" x2="7" y2="16"/>
+                </svg>
+                <span class="sr-action-label">Browse</span>
+            </button>
+
+            <button
+                class="sr-action-btn"
+                on:click={() => ankiAction("add")}
+                title="Add a new card"
+                aria-label="Add"
+            >
+                <svg class="sr-action-icon" viewBox="0 0 20 20" aria-hidden="true">
+                    <rect x="3" y="4" width="14" height="12" rx="1.5"/>
+                    <line x1="10" y1="8" x2="10" y2="14"/>
+                    <line x1="7" y1="11" x2="13" y2="11"/>
+                </svg>
+                <span class="sr-action-label">Add</span>
+            </button>
+
+            <button
+                class="sr-action-btn"
+                on:click={() => ankiAction("stats")}
+                title="View statistics"
+                aria-label="Stats"
+            >
+                <svg class="sr-action-icon" viewBox="0 0 20 20" aria-hidden="true">
+                    <rect x="3" y="11" width="3" height="5" rx="1"/>
+                    <rect x="8.5" y="7" width="3" height="9" rx="1"/>
+                    <rect x="14" y="4" width="3" height="12" rx="1"/>
+                </svg>
+                <span class="sr-action-label">Stats</span>
+            </button>
+
+            <!-- More menu -->
+            <div class="sr-more-wrap">
+                <button
+                    class="sr-action-btn sr-action-btn--more"
+                    on:click={toggleMore}
+                    aria-haspopup="true"
+                    aria-expanded={moreOpen}
+                    title="More Anki tools"
+                    aria-label="More"
+                >
+                    <svg class="sr-action-icon" viewBox="0 0 20 20" aria-hidden="true">
+                        <circle cx="5" cy="10" r="1.5"/>
+                        <circle cx="10" cy="10" r="1.5"/>
+                        <circle cx="15" cy="10" r="1.5"/>
+                    </svg>
+                    <span class="sr-action-label">More</span>
+                </button>
+
+                {#if moreOpen}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                    <div class="sr-more-backdrop" on:click={closeMore}></div>
+                    <ul class="sr-more-menu" role="menu">
+                        <li role="none">
+                            <button role="menuitem" on:click={() => moreAction("import")}>
+                                <svg viewBox="0 0 20 20" aria-hidden="true">
+                                    <polyline points="10,3 10,13"/>
+                                    <polyline points="6,9 10,13 14,9"/>
+                                    <rect x="3" y="15" width="14" height="2" rx="1"/>
+                                </svg>
+                                Import…
+                            </button>
+                        </li>
+                        <li role="none">
+                            <button role="menuitem" on:click={() => moreAction("export")}>
+                                <svg viewBox="0 0 20 20" aria-hidden="true">
+                                    <polyline points="10,13 10,3"/>
+                                    <polyline points="6,7 10,3 14,7"/>
+                                    <rect x="3" y="15" width="14" height="2" rx="1"/>
+                                </svg>
+                                Export…
+                            </button>
+                        </li>
+                        <li class="sr-more-divider" role="none"></li>
+                        <li role="none">
+                            <button role="menuitem" on:click={() => moreAction("deck-options")}>
+                                <svg viewBox="0 0 20 20" aria-hidden="true">
+                                    <circle cx="10" cy="10" r="2.5"/>
+                                    <path d="M10 3v2M10 15v2M3 10h2M15 10h2M5.1 5.1l1.4 1.4M13.5 13.5l1.4 1.4M5.1 14.9l1.4-1.4M13.5 6.5l1.4-1.4"/>
+                                </svg>
+                                Deck options…
+                            </button>
+                        </li>
+                        <li role="none">
+                            <button role="menuitem" on:click={() => moreAction("prefs")}>
+                                <svg viewBox="0 0 20 20" aria-hidden="true">
+                                    <path d="M10 2a8 8 0 1 0 0 16A8 8 0 0 0 10 2z"/>
+                                    <line x1="10" y1="8" x2="10" y2="12"/>
+                                    <circle cx="10" cy="6" r="0.8" fill="currentColor"/>
+                                </svg>
+                                Preferences…
+                            </button>
+                        </li>
+                    </ul>
+                {/if}
+            </div>
+        </nav>
     </header>
 
     <!-- ── Score cards ───────────────────────────────────────────────────── -->
@@ -431,9 +587,10 @@ Honesty invariants (D-SR10, spec-measurement §6):
     .sr-home-header {
         display: flex;
         align-items: center;
-        padding: 1.1em 2em;
+        padding: 0.75em 2em;
         border-bottom: 1px solid $border;
         background: $surface;
+        gap: 1em;
     }
 
     .sr-brand {
@@ -442,6 +599,135 @@ Honesty invariants (D-SR10, spec-measurement §6):
         font-weight: 700;
         color: $indigo;
         letter-spacing: -0.01em;
+        flex-shrink: 0;
+    }
+
+    // ── Anki action controls (WP-25) ──────────────────────────────────────────
+
+    .sr-anki-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.25em;
+        margin-left: auto;
+    }
+
+    .sr-action-btn {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2em;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        padding: 0.35em 0.65em;
+        font-family: $grotesk;
+        font-size: 0.72em;
+        font-weight: 500;
+        color: $muted;
+        cursor: pointer;
+        transition: background 0.12s, border-color 0.12s, color 0.12s;
+        white-space: nowrap;
+
+        &:hover {
+            background: $indigo-light;
+            border-color: $indigo-light;
+            color: $indigo;
+
+            .sr-action-icon {
+                stroke: $indigo;
+            }
+        }
+
+        &:focus-visible {
+            outline: 2px solid $indigo;
+            outline-offset: 2px;
+        }
+
+        &--more {
+            // slight emphasis on the ellipsis button
+        }
+    }
+
+    .sr-action-icon {
+        width: 17px;
+        height: 17px;
+        stroke: $muted;
+        stroke-width: 1.6;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        transition: stroke 0.12s;
+    }
+
+    .sr-action-label {
+        line-height: 1;
+    }
+
+    // More dropdown
+    .sr-more-wrap {
+        position: relative;
+    }
+
+    .sr-more-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 99;
+    }
+
+    .sr-more-menu {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 6px);
+        z-index: 100;
+        background: $surface;
+        border: 1px solid $border;
+        border-radius: 9px;
+        box-shadow: 0 4px 18px rgba(27, 36, 48, 0.13);
+        padding: 0.4em 0;
+        list-style: none;
+        margin: 0;
+        min-width: 170px;
+
+        li button {
+            display: flex;
+            align-items: center;
+            gap: 0.6em;
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 0.6em 1.1em;
+            font-family: $grotesk;
+            font-size: 0.88em;
+            color: $ink;
+            cursor: pointer;
+            text-align: left;
+
+            svg {
+                width: 15px;
+                height: 15px;
+                stroke: $muted;
+                stroke-width: 1.6;
+                fill: none;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+                flex-shrink: 0;
+            }
+
+            &:hover {
+                background: $indigo-light;
+                color: $indigo;
+
+                svg {
+                    stroke: $indigo;
+                }
+            }
+        }
+    }
+
+    .sr-more-divider {
+        height: 1px;
+        background: $border;
+        margin: 0.3em 0;
     }
 
     // ── Score cards ───────────────────────────────────────────────────────────

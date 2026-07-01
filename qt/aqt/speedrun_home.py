@@ -1,7 +1,7 @@
 # Copyright: Ankitects Pty Ltd and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 """
-Speedrun WP-20 — Home study-plan dialog.
+Speedrun WP-20 / WP-25 — Home study-plan dialog.
 
 Opens the Speedrun Home screen (spec-ui §3.1) in a resizable Qt dialog.
 The page is the SvelteKit route at /speedrun-dashboard/<deck_id>, which
@@ -10,10 +10,23 @@ renders SpeedrunDashboard.svelte (the WP-20 Home study-plan surface).
 Entry point: open() classmethod — add to Tools menu from main.py.
 
 Bridge commands received from the web page (pycmd calls):
+
   speedrun:home:start-drill:<skill>
       Opens a targeted-drill session (WP-22) for <skill>.
   speedrun:home:session:<type>
       Opens a session of the specified type: mixed | timed | blind.
+
+  speedrun:anki:sync          → mw.on_sync_button_clicked()
+  speedrun:anki:browse        → mw.onBrowse()
+  speedrun:anki:add           → mw.onAddCard()
+  speedrun:anki:stats         → mw.onStats()
+  speedrun:anki:import        → mw.onImport()
+  speedrun:anki:export        → mw.onExport()
+  speedrun:anki:deck-options  → mw.onDeckConf()
+  speedrun:anki:prefs         → mw.onPrefs()
+
+  Each opens the corresponding Anki dialog on top of the Home; closing it
+  returns focus to the Home. The Home is never closed by these actions.
 """
 from __future__ import annotations
 
@@ -115,7 +128,34 @@ class SpeedrunHomeDialog(QDialog):
             self._open_session(session_type, "")
             return True
 
+        if cmd.startswith("speedrun:anki:"):
+            return self._handle_anki_action(cmd[len("speedrun:anki:"):])
+
         return False
+
+    # WP-25 action table — each entry opens the Anki dialog on top of Home.
+    # Closing that dialog returns focus to the Home; Home is never dismissed.
+    _ANKI_ACTIONS: dict[str, str] = {
+        "sync": "on_sync_button_clicked",
+        "browse": "onBrowse",
+        "add": "onAddCard",
+        "stats": "onStats",
+        "import": "onImport",
+        "export": "onExport",
+        "deck-options": "onDeckConf",
+        "prefs": "onPrefs",
+    }
+
+    def _handle_anki_action(self, action: str) -> bool:
+        """Dispatch a speedrun:anki:<action> bridge command to mw.*."""
+        method_name = self._ANKI_ACTIONS.get(action)
+        if method_name is None:
+            return False
+        method = getattr(self.mw, method_name, None)
+        if method is None:
+            return False
+        method()
+        return True
 
     def _open_session(self, mode: str, focus_skill: str) -> None:
         """Open a SpeedrunSessionDialog for the given mode and focus skill."""
