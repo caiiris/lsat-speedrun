@@ -175,7 +175,9 @@ fn extract_skill_tag(note_tags: &str) -> Option<String> {
 ///
 /// This replicates the exact same logic used in `stats/graphs/retrievability.rs`
 /// and `storage/sqlite.rs:add_extract_fsrs_retrievability`.
-fn elapsed_seconds_for_card(
+///
+/// `pub(super)` so `measurement.rs` (same `stats` module) can reuse it.
+pub(super) fn elapsed_seconds_for_card(
     card_data: &CardData,
     due: i32,
     ivl: i32,
