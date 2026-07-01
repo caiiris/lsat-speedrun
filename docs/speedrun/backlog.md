@@ -17,7 +17,7 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038, B041 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038, B041, B042 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
 | fixed / done | B008, B009, B010, B021, B031, B034, B035, B037, B039, B040 |
 
@@ -415,6 +415,15 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 - **Context:** with the single-window shell, the Home lives in `mw.web`; when a `SpeedrunSessionDialog` closes, the Home page isn't reloaded, so the scores/skill-map can be stale until the user presses `Ctrl+Shift+H` (which re-loads the state).
 - **Resolution:** on session-dialog close, signal the Home to reload (re-`moveToState("speedrunHome")` or a JS refresh hook).
 - **Links:** WP-26; D-SR37; WP-22.
+
+### B042 — Reskinned Stats: D3 chart series colors + calendar heatmap still default (not Speedrun palette)
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-07-01 by WP-27 build agent (deferred)
+- **Ref:** `ts/routes/graphs/graphs-base.scss` (`body.speedrun-stats`), the graph TS (`reviews.ts`, `intervals.ts`, `CalendarGraph`)
+- **Context:** WP-27 reskins the Stats page chrome (background, cards, headings, controls, accent) to Speedrun, but the **chart series colors** (D3 `interpolate*`, hardcoded in TS) and the **calendar heatmap** palette are still Anki defaults — recoloring needs chart-logic edits, out of scope for the CSS-only reskin.
+- **Resolution:** recolor the D3 series + heatmap toward the Speedrun palette (indigo primary) when polishing.
+- **Links:** WP-27; spec-ui §2.
 
 ---
 

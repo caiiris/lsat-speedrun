@@ -59,6 +59,7 @@
 | WP-24 | Full-window Speedrun shell (hide Anki chrome; Home on launch) | UX | Desktop-UI | landed ✅ (merged; `SPEEDRUN_SHELL` flag: auto-open Home maximized + hide toolbar; needs owner GUI-verify; Sync-in-shell → B039) |
 | WP-25 | Anki functions in Speedrun Home (Sync/Browse/Add/Stats/More) — Home-as-hub | UX | Desktop-UI | landed ✅ (merged; top-bar Sync/Browse/Add/Stats + More menu → mw actions; deck-browser re-hidden; owner GUI-verify; closes B039) |
 | WP-26 | Single-window shell (Home IS the main window; close = clean quit) | UX | Desktop-UI | landed ✅ (merged; new `speedrunHome` main-window state in `mw.web`; whitelisted dashboard RPC; dialog auto-open removed; fixes B040; owner GUI-verify; post-session refresh → B041) |
+| WP-27 | Reskin Statistics page to Speedrun UI (Stats button) | UX | Desktop-UI | landed ✅ (merged; `body.speedrun-stats` theme gated by `?sr=1`/`SPEEDRUN_SHELL`; stock Anki stats unchanged with flag off; chart series colors deferred → B042) |
 
 ## Dependency graph
 
