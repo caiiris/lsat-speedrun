@@ -49,13 +49,15 @@ from aqt.profiles import VideoDriver
 from aqt.qt import *
 from aqt.sound import av_player, play_clicked_audio, record_audio
 
-# Speedrun WP-6 — commit-then-reveal reviewer extension (additive, gated on notetype)
+# Speedrun WP-6/WP-21 — commit-then-reveal + prephrase + name-the-trap reviewer
+# extension (additive, gated on notetype).
 from aqt.speedrun import (
     LSAT_ITEM_NOTETYPE,
     bottom_commit_prompt,
     bottom_continue_button,
-    build_item_answer_html,
-    build_item_question_html,
+    build_choices_html,
+    build_prephrase_html,
+    build_reveal_html,
     get_item_fields,
     rating_for_committed,
     speedrun_card_type,
@@ -182,10 +184,15 @@ class Reviewer:
         self._show_answer_timer: QTimer | None = None
         self.auto_advance_enabled = False
         gui_hooks.av_player_did_end_playing.append(self._on_av_player_did_end_playing)
-        # Speedrun WP-6 state — reset on each new card
-        self._sr_committed: str | None = None          # choice the learner clicked (A-E)
-        self._sr_item_fields: dict[str, str] | None = None  # drawn item fields (Level 2)
-        self._sr_card_kind: str | None = None          # 'item' | 'skill' | None
+        # Speedrun WP-6/WP-21 state — reset on each new card
+        self._sr_committed: str | None = None           # choice the learner clicked (A-E)
+        self._sr_item_fields: dict[str, str] | None = None   # drawn item fields (Level 2)
+        self._sr_card_kind: str | None = None           # 'item' | 'skill' | None
+        # WP-21 additions
+        self._sr_phase: str = "prephrase"               # 'prephrase'|'choices'|'revealed'
+        self._sr_prephrase_text: str | None = None      # typed prediction (session-local)
+        self._sr_trap_chosen: str | None = None         # trap tag string user selected
+        self._sr_trap_result: str | None = None         # 'correct'|'wrong'|None
 
     def show(self) -> None:
         if self.mw.col.sched_ver() == 1 or not self.mw.col.v3_scheduler():
@@ -264,10 +271,14 @@ class Reviewer:
         self.previous_card = self.card
         self.card = None
         self._v3 = None
-        # Reset Speedrun per-card state
+        # Reset Speedrun per-card state (WP-6/WP-21)
         self._sr_committed = None
         self._sr_item_fields = None
         self._sr_card_kind = None
+        self._sr_phase = "prephrase"
+        self._sr_prephrase_text = None
+        self._sr_trap_chosen = None
+        self._sr_trap_result = None
         self._get_next_v3_card()
 
         self._previous_card_info.set_card(self.previous_card)
@@ -317,6 +328,48 @@ class Reviewer:
         except Exception as exc:
             print(f"[Speedrun] draw_item_for_skill failed: {exc}")
             return None
+
+    def _sr_on_prephrase_revealed(self, text: str | None) -> None:
+        """Callback from JS evalWithCallback after user clicks 'Reveal choices'.
+
+        Stores the prediction text (empty string = user left the field blank;
+        None = skipped entirely), transitions to choices phase, re-renders.
+        """
+        self._sr_prephrase_text = text if text is not None else ""
+        self._sr_phase = "choices"
+        self._showQuestion()
+
+    def _sr_on_trap_chosen(self, trap_tag: str) -> None:
+        """Handle name-the-trap chip selection (D-SR34).
+
+        Checks the chosen trap deterministically against TrapChoiceX for the
+        committed choice.  Re-injects the reveal HTML with the result.
+        No AI involved.
+        """
+        self._sr_trap_chosen = trap_tag
+        sr_fields = self._speedrun_item_fields_for_display()
+        if sr_fields is None or not self._sr_committed:
+            return
+
+        expected = sr_fields.get(f"TrapChoice{self._sr_committed}", "").strip()
+        # Normalize: strip "trap::" prefix for loose comparison
+        def _norm(t: str) -> str:
+            return t.strip().removeprefix("trap::").lower()
+
+        self._sr_trap_result = (
+            "correct" if expected and _norm(expected) == _norm(trap_tag) else "wrong"
+        )
+
+        # Re-inject the answer HTML with trap feedback included
+        a = build_reveal_html(
+            sr_fields,
+            self._sr_committed,
+            prephrase_text=self._sr_prephrase_text,
+            trap_chosen=self._sr_trap_chosen,
+            trap_result=self._sr_trap_result,
+        )
+        self.web.eval(f"_showAnswer({json.dumps(a)});")
+        # Bottom bar "Next question" button is already shown; no need to re-render it
 
     def _speedrun_item_fields_for_display(self) -> dict[str, str] | None:
         """Return item fields for rendering.
@@ -447,10 +500,13 @@ class Reviewer:
         self.typedAnswer: str | None = None
         c = self.card
 
-        # --- Speedrun WP-6: commit-then-reveal question rendering ---
+        # --- Speedrun WP-6/WP-21: prephrase → choices question rendering ---
         sr_fields = self._speedrun_item_fields_for_display()
         if sr_fields is not None:
-            q = build_item_question_html(sr_fields)
+            if self._sr_phase == "prephrase":
+                q = build_prephrase_html(sr_fields)
+            else:
+                q = build_choices_html(sr_fields)
             # Placeholder answer (never shown until after commit)
             a = "<div id='sr-answer-placeholder'></div>"
             self._run_state_mutation_hook()
@@ -555,10 +611,17 @@ class Reviewer:
         self.state = "answer"
         c = self.card
 
-        # --- Speedrun WP-6: commit-then-reveal answer rendering ---
+        # --- Speedrun WP-6/WP-21: reveal rendering (with prephrase + name-the-trap) ---
         sr_fields = self._speedrun_item_fields_for_display()
         if sr_fields is not None and self._sr_committed:
-            a = build_item_answer_html(sr_fields, self._sr_committed)
+            self._sr_phase = "revealed"
+            a = build_reveal_html(
+                sr_fields,
+                self._sr_committed,
+                prephrase_text=self._sr_prephrase_text,
+                trap_chosen=self._sr_trap_chosen,
+                trap_result=self._sr_trap_result,
+            )
             self.web.eval(f"_showAnswer({json.dumps(a)});")
             self._showEaseButtons()  # overridden below for Speedrun
             self.mw.web.setFocus()
@@ -758,11 +821,14 @@ class Reviewer:
         gui_hooks.audio_did_seek_relative(self.web, self.seek_secs)
 
     def onEnterKey(self) -> None:
-        # Speedrun WP-6: in the commit phase, Space/Enter submits "speedrun:continue"
-        # if a choice has already been committed; otherwise do nothing (the learner
-        # must click a choice — no keyboard shortcut for commit yet).
+        # Speedrun WP-6/WP-21: Space/Enter behaviour per phase.
+        # - prephrase: trigger prephrase:reveal (reads input via JS callback)
+        # - choices:   do nothing (click only; avoids accidental commit)
+        # - revealed:  submit speedrun:continue
         if self._sr_card_kind is not None:
-            if self.state == "answer" and self._sr_committed:
+            if self.state == "question" and self._sr_phase == "prephrase":
+                self._linkHandler("speedrun:prephrase:reveal")
+            elif self.state == "answer" and self._sr_committed:
                 self._linkHandler("speedrun:continue")
             return
         if self.state == "question":
@@ -781,13 +847,41 @@ class Reviewer:
             self._answerCard(self._defaultEase())
 
     def _linkHandler(self, url: str) -> None:
-        # --- Speedrun WP-6 commit/continue handlers ---
+        # --- Speedrun WP-6/WP-21 handlers ---
+
+        # Prephrase: "Reveal choices" button — read input then transition
+        if url == "speedrun:prephrase:reveal" and self._sr_card_kind is not None:
+            if self.state == "question" and self._sr_phase == "prephrase":
+                self.web.evalWithCallback(
+                    "document.getElementById('sr-prephrase-input')?.value ?? ''",
+                    self._sr_on_prephrase_revealed,
+                )
+            return
+
+        # Prephrase: "Skip" button — transition immediately with no text
+        if url == "speedrun:prephrase:skip" and self._sr_card_kind is not None:
+            if self.state == "question" and self._sr_phase == "prephrase":
+                self._sr_prephrase_text = None   # None = skipped (not "")
+                self._sr_phase = "choices"
+                self._showQuestion()
+            return
+
+        # Commit a choice (A–E)
         if url.startswith("speedrun:commit:") and self._sr_card_kind is not None:
             choice = url[len("speedrun:commit:"):].strip().upper()
             if choice in ("A", "B", "C", "D", "E") and self.state == "question":
                 self._sr_committed = choice
                 self._showAnswer()
             return
+
+        # Name-the-trap chip selected
+        if url.startswith("speedrun:trap:") and self._sr_card_kind is not None:
+            if self.state == "answer" and self._sr_committed:
+                trap_tag = url[len("speedrun:trap:"):]
+                self._sr_on_trap_chosen(trap_tag)
+            return
+
+        # Continue / Next question
         if url == "speedrun:continue" and self._sr_card_kind is not None:
             if self.state == "answer" and self._sr_committed:
                 sr_fields = self._speedrun_item_fields_for_display()
@@ -967,9 +1061,9 @@ timerStopped = false;
         )
 
     def _showAnswerButton(self) -> None:
-        # Speedrun WP-6: replace the 'Show Answer' button with a commit prompt
+        # Speedrun WP-6/WP-21: replace 'Show Answer' with a phase-aware prompt
         if self._sr_card_kind is not None:
-            middle = bottom_commit_prompt(self._remaining())
+            middle = bottom_commit_prompt(self._remaining(), phase=self._sr_phase)
             self.bottom.web.eval("showQuestion(%s,%d);" % (json.dumps(middle), 0))
             return
 
@@ -991,16 +1085,13 @@ timerStopped = false;
         self.bottom.web.eval("showQuestion(%s,%d);" % (json.dumps(middle), maxTime))
 
     def _showEaseButtons(self) -> None:
-        # Speedrun WP-6: show a single 'Continue' button instead of 4 ease buttons
+        # Speedrun WP-6/WP-21: single 'Next question' button (de-Anki'd chrome)
         if self._sr_card_kind is not None and self._sr_committed:
-            sr_fields = self._speedrun_item_fields_for_display()
-            if sr_fields is not None:
-                ease = rating_for_committed(self._sr_committed, sr_fields)
-                middle = bottom_continue_button(ease)
-                self.bottom.web.eval(
-                    f"showAnswer({json.dumps(middle)}, false);"
-                )
-                return
+            middle = bottom_continue_button()
+            self.bottom.web.eval(
+                f"showAnswer({json.dumps(middle)}, false);"
+            )
+            return
 
         if not self._states_mutated:
             self.mw.progress.single_shot(50, self._showEaseButtons)
