@@ -35,9 +35,9 @@
 | WP-0 | Fork + dual-platform build spine | 0 | Infra | WP-0a desktop ✅ (B008) · WP-0b mobile pending (B001) |
 | WP-1 | Taxonomy + notetypes + seed deck (+weights) | 0 | Content | offline landed ✅ (tests green; real items pending B015) |
 | WP-2 | Protobuf interface contract | 0 | Contracts | landed ✅ (proto + stubs; bindings regen in Rust/Py/TS; builds green) |
-| WP-3 | Fresh-item selection (`draw_item_for_skill`) | 1 | Engine | not started |
-| WP-4 | Interleaving order (`ReviewCardOrder` variant) | 1 | Engine | not started |
-| WP-5 | Mastery query (`skill_mastery`) | 1 | Engine | not started |
+| WP-3 | Fresh-item selection (`draw_item_for_skill`) | 1 | Engine | landed ✅ (merged to main; 7 unit tests; difficulty deferred B024, sidecar B025) |
+| WP-4 | Interleaving order (`ReviewCardOrder` variant) | 1 | Engine | landed ✅ (merged; 4 unit tests; deck-options toggle) |
+| WP-5 | Mastery query (`skill_mastery`) | 1 | Engine | landed ✅ (merged; 3 unit tests; threshold 0.90 D-SR28) |
 | WP-6 | Desktop reviewer (commit-then-reveal + draw) | 1 | Desktop-Reviewer | not started |
 | WP-7 | Memory score + give-up gate | 1 | Measurement | not started |
 | WP-8 | AnkiDroid review loop | 1 | Mobile | not started |
@@ -269,21 +269,21 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 # Phase 1 — Wednesday: core review loop, both apps, NO AI
 
 ### WP-3 — Fresh-item selection (`draw_item_for_skill`)
-- **Lane:** Engine · **Depends on:** WP-2, WP-1 · **Status:** not started
+- **Lane:** Engine · **Depends on:** WP-2, WP-1 · **Status:** done (merged to main 2026-06-30; `rslib/src/scheduler/queue/selection.rs` + `v3.py`; 7 unit tests). Difficulty-weighting deferred → B024; sidecar in-memory only → B025.
 - **Goal:** Implement the selection algorithm (spec-engine §5.2) + `SchedulerService` impl + pylib wrapper + the **best-effort local served-item sidecar** (outside the collection — D-SR4).
 - **Touches:** `rslib/src/scheduler/service/`, a new `rslib/src/scheduler/queue/selection.rs`, `pylib/anki/scheduler/v3.py`.
 - **Acceptance:** spec-engine AC 3; ≥1 Rust unit test (fresh vs least-recently-served fallback).
 - **Parallel-safe with:** WP-4, WP-5, WP-7.
 
 ### WP-4 — Interleaving order (`ReviewCardOrder` variant)
-- **Lane:** Engine · **Depends on:** WP-2, WP-1 · **Status:** not started
+- **Lane:** Engine · **Depends on:** WP-2, WP-1 · **Status:** done (merged to main 2026-06-30; `builder/{gathering,mod}.rs` reorder + `ts/routes/deck-options/choices.ts` + ftl string; 4 unit tests).
 - **Goal:** Implement the new enum variant in the queue builder (round-robin across types; stock order = control) + expose the deck-options toggle.
 - **Touches:** `rslib/src/scheduler/queue/builder/{gathering,mod}.rs`; deck-options UI (`ts/routes/deck-options/`, `qt/aqt/deckoptions.py`).
 - **Acceptance:** spec-engine AC 1; Rust unit test (no consecutive same-type); D-SR6.
 - **Parallel-safe with:** WP-3 (see collision note), WP-5.
 
 ### WP-5 — Mastery query (`skill_mastery`)
-- **Lane:** Engine · **Depends on:** WP-2, WP-1 · **Status:** not started
+- **Lane:** Engine · **Depends on:** WP-2, WP-1 · **Status:** done (merged to main 2026-06-30; `rslib/src/storage/card/speedrun.rs` + `stats/service.rs` + `collection.py`; 3 unit tests; mastered threshold 0.90 → D-SR28).
 - **Goal:** One indexed SQL aggregate per skill (mastered / total / avg recall) + `StatsService` impl + pylib wrapper; p95 < 1s on 50k.
 - **Touches:** `rslib/src/stats/service.rs`, `rslib/src/storage/` (SQL), `pylib/anki/collection.py`.
 - **Acceptance:** spec-engine AC 4; Rust unit test (aggregate correctness); D-SR5.

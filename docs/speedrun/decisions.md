@@ -26,6 +26,7 @@
 | AI | D-SR14, D-SR15 | AI contract + roster, AI-card-check |
 | Ops | D-SR16 | Doc home |
 | Build · wave 1 | D-SR17–D-SR26 | taxonomy, readiness, card-check, leakage, trap scheduling, tag form, tagging eval |
+| Build · wave 2 (engine) | D-SR27, D-SR28 | skill-identity resolution, mastery threshold |
 
 ---
 
@@ -261,6 +262,29 @@
 - **Considered:** keep the `type::flaw` default (silently mislabels); raise `ValueError` (crashes batch tagging).
 - **Gaps / risks:** small `StemClassifier` change needed (→ B017); `type::unknown` must be excluded from coverage/scheduling.
 - **Ref:** `tools/speedrun/tagging/tagger.py:StemClassifier`, spec-ai §4.
+
+---
+
+> **Build · wave 2 (engine, D-SR27–D-SR28)** — decisions promoted from the WP-3/WP-4/WP-5
+> engine build agents (2026-06-30), after their branches merged to `main`.
+
+### D-SR27 — Skill identity = first `type::` / `skill::` / `trap::` note tag
+
+- **Status:** resolved
+- **Decided:** 2026-06-30, promoted from WP-3/WP-4/WP-5 build agents (inbox WP-3 L1, WP-4 L1, WP-5 L2/L3)
+- **Chose:** A skill card's (and item's) skill identity is the **first note tag** whose prefix is `type::`, `skill::`, or `trap::` — the `IdentityTag` written by `build_seed_deck.py` (`note.tags = [IdentityTag]`). All three engine lanes **independently converged** on this: WP-3 (`draw_item_for_skill` pool lookup), WP-4 (interleave grouping by `type::*`), WP-5 (mastery grouping). Skill-vs-item is disambiguated by **notetype name** ("LSAT Skill"), *not* by tag, so item notes (which also carry `type::/skill::/trap::` tags) are not miscounted.
+- **Considered:** reading `Card.custom_data` or a notetype field for identity — rejected: the pool query is tag-based (`tag:skill::S`, spec-engine §5.2), a field read adds a field-order dependency, and custom_data is empty on seed skill cards.
+- **Gaps / risks:** assumes exactly one identity tag per skill card; a user-added second `type::/skill::/trap::` tag → first wins (documented). The grouping-key form is now frozen across three lanes — a taxonomy tag-string change ripples to WP-3/4/5.
+- **Ref:** `build_seed_deck.py` (`note.tags = [IdentityTag]`), spec-engine §5.2/§5.4/§7, D-SR24; inbox WP-3 L1 / WP-4 L1 / WP-5 L2/L3.
+
+### D-SR28 — Mastery threshold: FSRS recall ≥ 0.90
+
+- **Status:** resolved (tunable single const)
+- **Decided:** 2026-06-30, WP-5 build agent (inbox L1/L6)
+- **Chose:** A skill card counts as **mastered** when its current FSRS recall (retrievability) ≥ **0.90**, as the module constant `MASTERY_RECALL_THRESHOLD` feeding `skill_mastery`. 0.90 matches FSRS's default desired-retention; recall uses the existing `FSRS::current_retrievability_seconds` (not forked). Cards with no memory state (never reviewed) contribute recall 0.0 and are not mastered.
+- **Considered:** 0.80 (marginally-learned skills count → inflates the dashboard), 0.95 (too strict early).
+- **Gaps / risks:** a judgment line, not calibrated from real data — revisit with WP-7 (Memory) / the calibration eval; single-line change if it needs tuning.
+- **Ref:** `rslib/src/stats/service.rs` (`MASTERY_RECALL_THRESHOLD`), spec-engine §5.4, D-SR5; inbox WP-5 L1/L6.
 
 ---
 

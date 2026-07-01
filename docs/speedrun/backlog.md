@@ -17,7 +17,7 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
 | fixed / done | B008, B009, B010, B021 |
 
@@ -249,6 +249,33 @@
 - **Context:** the entire Wave-1 docs/data tree was committed (f4fe85cc) without running dprint, so `just check`/`just fmt` fail on formatting before reaching tests — independent of any engine change. `.dprint.json` covers md/json/toml/ts/scss (not `.rs`/`.proto`); the WP-2 Rust + proto edits are verified clean (`cargo fmt --check`, `clang-format --dry-run -Werror` both pass).
 - **Resolution:** run `just fix-fmt` (`dprint fmt`) once over the speedrun tree and commit the (whitespace-only) reformat; ideally add a pre-commit/CI guard so new docs land formatted. Deferred here to avoid bundling 22 files of churn (incl. data-contract JSON) into the WP-2 change.
 - **Links:** relates B016 (test/format hygiene).
+
+### B024 — Difficulty-appropriate item selection deferred (WP-3 draws uniformly at random)
+
+- **Type:** issue · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-06-30 by WP-3 build agent (inbox L3)
+- **Ref:** `rslib/src/scheduler/queue/selection.rs:draw_item_for_skill_impl`; spec-engine §5.2; D-SR14
+- **Context:** spec-engine §5.2 wants fresh-item selection to prefer **difficulty-appropriate** (warm-started) items, but the AI difficulty model (spec-ai / D-SR14) isn't built. WP-3 ships **uniform-random** selection among fresh candidates as an explicit, code-commented placeholder.
+- **Resolution:** replace the random pick with a difficulty-weighted sampler once WP-11 emits per-item difficulty signals.
+- **Links:** D-SR14; WP-11; spec-engine §5.2.
+
+### B025 — Served-item sidecar is in-memory only (not persisted across restart)
+
+- **Type:** issue · **Status:** open (accepted for v1) · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-3 build agent (inbox L2/L8)
+- **Ref:** `rslib/src/scheduler/queue/selection.rs` (`SERVED_SIDECAR`, a `LazyLock<Mutex<HashMap<col_path → skill → log>>>`); spec-engine §7; D-SR4
+- **Context:** the repeat-avoidance sidecar is process-level and keyed by collection path — local, non-synced, non-undoable (per D-SR4). It **resets on process restart**, so on the first draw after a restart the avoidance window is empty and any item (incl. the most-recently-served) may re-draw. Acceptable per D-SR4 "best-effort."
+- **Resolution:** if repeats-after-restart matter, persist to a JSON sidecar file beside the collection (the interface is already isolated behind the served-log type).
+- **Links:** D-SR4; spec-engine §7.
+
+### B026 — Full `just check` not green: pre-existing lint/format debt in Wave-1 tooling
+
+- **Type:** refactor · **Status:** open · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-3/WP-4/WP-5 build agents (all three reported the same pre-existing failures)
+- **Ref:** `tools/speedrun/deck/build_seed_deck.py:507` + `tools/speedrun/deck/tests/test_build_deck.py:86` (mypy); `tools/speedrun/` (ruff, WP-12); `docs/speedrun/*.md` (dprint → B023)
+- **Context:** on the merged engine tree `just build`, `just test-rust`, and `just test-py` are **all green**, but the full `just check` still fails on pre-existing formatting/lint of Wave-1 files: dprint on docs (B023), ruff on `tools/speedrun`, and mypy on `build_seed_deck.py` / `test_build_deck.py`. **None are introduced by the engine WPs** — verified by all three lanes.
+- **Resolution:** `just fix-fmt` / `just fix-lint`, fix the mypy annotations on the Wave-1 tooling, and wire `out/pylib` into the tools-test pythonpath (relates B016) so a clean `just check` gates future work.
+- **Links:** B023 (dprint), B016 (test hygiene).
 
 ---
 
