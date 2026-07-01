@@ -57,7 +57,7 @@
 | WP-22 | Session layer + result/blind-review (drills/mixed/timed) | UX | Desktop-UI | landed ✅ (merged; `speedrun_session.py` all 4 modes + result + blind review; 24 tests; limits B036) |
 | WP-23 | RC passage workspace | UX | Desktop-UI | deferred (phase-2) |
 | WP-24 | Full-window Speedrun shell (hide Anki chrome; Home on launch) | UX | Desktop-UI | landed ✅ (merged; `SPEEDRUN_SHELL` flag: auto-open Home maximized + hide toolbar; needs owner GUI-verify; Sync-in-shell → B039) |
-| WP-25 | Anki functions in Speedrun Home (Sync/Browse/Add/Stats/More) — Home-as-hub | UX | Desktop-UI | in progress (D-SR37) |
+| WP-25 | Anki functions in Speedrun Home (Sync/Browse/Add/Stats/More) — Home-as-hub | UX | Desktop-UI | landed ✅ (merged; top-bar Sync/Browse/Add/Stats + More menu → mw actions; deck-browser re-hidden; owner GUI-verify; closes B039) |
 
 ## Dependency graph
 

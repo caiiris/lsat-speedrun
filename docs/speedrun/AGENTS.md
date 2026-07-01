@@ -99,7 +99,8 @@ deterministic graded signal). **Presentation layer only — engine untouched.** 
 layer; all additive. Design mockups in `docs/speedrun/assets/`. **Landed (all merged to `main`, build +
 `just test-ts`/`test-py` green):** **WP-20** Home, **WP-21** drill (prephrase + name-the-trap), **WP-22**
 session layer (drills/mixed/timed/blind + result), **WP-24** full-window shell (`SPEEDRUN_SHELL` flag:
-Home on launch + Anki chrome hidden). The Home renders + matches the mockup (its earlier "blank/awful" was
+Home on launch + Anki chrome hidden), **WP-25** Home-as-hub (Sync/Browse/Add/Stats/More surfaced in the
+Home → the deck browser is never a user surface, D-SR37). The Home renders + matches the mockup (its earlier "blank/awful" was
 three GUI-only bugs B034/B035/B037, all fixed). **Desktop UX reframe is functionally complete — pending
 owner GUI-verify.** Open polish: B033 (reasoning-map/marked-conclusion field), B036 (session filter/state),
 B038 (Home Memory "no meta cards"), B039 (Sync/Browse button in shell).

@@ -17,9 +17,9 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038, B039 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
-| fixed / done | B008, B009, B010, B021, B031, B034, B035, B037 |
+| fixed / done | B008, B009, B010, B021, B031, B034, B035, B037, B039 |
 
 ---
 
@@ -391,7 +391,7 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 
 ### B039 — Speedrun shell: expose Anki functions (Sync/Browse) inside the Home (nicety)
 
-- **Type:** issue · **Status:** open · **Severity:** low
+- **Type:** issue · **Status:** fixed (WP-25) · **Severity:** low
 - **Discovered:** 2026-07-01 by WP-24 build agent (inbox)
 - **Ref:** `qt/aqt/main.py` (`SPEEDRUN_SHELL`, `_deckBrowserState`), `qt/aqt/speedrun_home.py`
 - **Context:** WP-24 first *hid* Anki's toolbar, which risked losing access to Browse/Add/Stats/Sync. **Fixed (2026-07-01):** the toolbar is no longer hidden — the maximized Speedrun Home merely *covers* the main window, so **closing the Home reveals full, functional Anki** (nothing lost). Remaining nicety: so the user rarely needs to leave Speedrun, surface **Sync + Browse** as buttons inside the Home shell itself.
