@@ -785,16 +785,16 @@ class AnkiQt(QMainWindow):
 
     def _deckBrowserState(self, oldState: MainWindowState) -> None:
         self.deckBrowser.show()
+        # WP-24 / B039: do NOT hide Anki's toolbar. The Speedrun Home is a
+        # maximized window that covers the main window (the clean "shell" look),
+        # so hiding the toolbar buys nothing visually but would lose Anki
+        # functionality. Closing the Home reveals full, functional Anki
+        # (Browse / Add / Stats / Sync). Re-enter Speedrun via Ctrl+Shift+H.
         if SPEEDRUN_SHELL:
-            # WP-24: hide Anki's top toolbar; Speedrun Home is the primary surface.
-            # Browse (B) and Sync (Y) remain accessible via keyboard shortcuts and
-            # the native OS menu bar (Tools menu).
-            self.toolbarWeb.setVisible(False)
+            self.toolbarWeb.setVisible(True)
 
     def _deckBrowserCleanup(self, newState: MainWindowState) -> None:
         if SPEEDRUN_SHELL:
-            # WP-24: restore toolbar visibility before entering any other state
-            # (review, overview, etc.) that may need it.
             self.toolbarWeb.setVisible(True)
 
     def _selectedDeck(self) -> DeckDict | None:

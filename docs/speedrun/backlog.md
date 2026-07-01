@@ -389,13 +389,13 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 - **Resolution:** confirm deck-children inclusion in the memory query; distinguish "no meta cards" from "meta cards exist but unreviewed" in the response/UI.
 - **Links:** D-SR29 (Memory), D-SR32 (dashboard RPC); WP-14/WP-20.
 
-### B039 — Speedrun shell: Sync / Browse not surfaced inside the Home (native menu/shortcut only)
+### B039 — Speedrun shell: expose Anki functions (Sync/Browse) inside the Home (nicety)
 
-- **Type:** issue · **Status:** open · **Severity:** medium
+- **Type:** issue · **Status:** open · **Severity:** low
 - **Discovered:** 2026-07-01 by WP-24 build agent (inbox)
-- **Ref:** `qt/aqt/main.py` (`SPEEDRUN_SHELL`, `_speedrun_auto_open_home`), `qt/aqt/speedrun_home.py`
-- **Context:** WP-24 hides Anki's top toolbar (Decks/Add/Browse/Stats/**Sync**) and auto-opens the Home maximized. Essential functions (Sync, Browse) are then only reachable via the native macOS menu or shortcuts (`Y` sync, `B` browse) — there's no in-shell button. Fine for a demo, but a real shell needs a minimal Speedrun top bar exposing at least **Sync** and **Browse**.
-- **Resolution:** add a small Speedrun top bar (or Home buttons) for Sync + Browse; wire to `mw.onSync` / `mw.onBrowse`.
+- **Ref:** `qt/aqt/main.py` (`SPEEDRUN_SHELL`, `_deckBrowserState`), `qt/aqt/speedrun_home.py`
+- **Context:** WP-24 first *hid* Anki's toolbar, which risked losing access to Browse/Add/Stats/Sync. **Fixed (2026-07-01):** the toolbar is no longer hidden — the maximized Speedrun Home merely *covers* the main window, so **closing the Home reveals full, functional Anki** (nothing lost). Remaining nicety: so the user rarely needs to leave Speedrun, surface **Sync + Browse** as buttons inside the Home shell itself.
+- **Resolution:** add Home buttons / a minimal Speedrun bar for Sync + Browse (→ `mw.onSync` / `mw.onBrowse`); optional.
 - **Links:** D-SR36; WP-24; spec-ui §2.
 
 ---
