@@ -17,9 +17,9 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B031 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
-| fixed / done | B008, B009, B010, B021 |
+| fixed / done | B008, B009, B010, B021, B031 |
 
 ---
 
@@ -167,8 +167,9 @@
 - **Discovered:** 2026-06-30 by WP-16 build agent (inbox L4/L5)
 - **Ref:** `tools/speedrun/eval/README.md`; spec-measurement §7
 - **Context:** (1) `revlog.ease`→0/1 outcome mapping is spec-silent (README assumes ease≥2→1, ease=1→0 — confirm); (2) harnesses take pre-split data but there's no `split.py` to create/pin a leak-free time-based held-out split.
-- **Resolution:** confirm the ease mapping; add a `split.py` utility before running real evals.
-- **Links:** spec-measurement §7; D-SR10, D-SR22.
+- **Update (2026-06-30, WP-14):** part (1) **resolved** → the ease→outcome mapping is now canonical (`ease≥2`=correct, `ease==1`=wrong, `ease=0` excluded) as **D-SR31**, matching the README's assumption. Part (2) (`split.py`) is still open.
+- **Resolution:** ~~confirm the ease mapping~~ (done, D-SR31); add a `split.py` utility before running real evals.
+- **Links:** spec-measurement §7; D-SR10, D-SR22, **D-SR31**.
 
 ### B015 — Seed-deck coverage below production threshold (synthetic-only)
 
@@ -315,12 +316,21 @@
 
 ### B031 — Memory score not yet callable from Python (Rust-only until WP-14)
 
-- **Type:** issue · **Status:** open (planned in WP-14) · **Severity:** low
+- **Type:** issue · **Status:** fixed (WP-14) · **Severity:** low
 - **Discovered:** 2026-06-30 by WP-7 build agent (inbox L1)
 - **Ref:** `rslib/src/stats/measurement.rs` (`memory_score_impl`); D-SR29
 - **Context:** `memory_score_impl` is implemented + tested in Rust but has no proto RPC / pylib wrapper, so the dashboard/Python can't call it yet. Deferred to WP-14 (adds the `MetaMemory` RPC there to avoid duplicate rebuilds / merge churn).
-- **Resolution:** add the `MetaMemory` (or equivalent) RPC + pylib wrapper in WP-14.
+- **Resolution:** ~~add the `MetaMemory` (or equivalent) RPC + pylib wrapper in WP-14.~~ **Resolved by WP-14** — the `SpeedrunDashboard` RPC's `memory` field exposes mean + bootstrap CI + card count (D-SR32).
 - **Links:** D-SR29; WP-14; spec-measurement §4.1.
+
+### B032 — Speedrun dashboard UI is minimal (deck-picker / i18n / polish deferred)
+
+- **Type:** refactor · **Status:** open · **Severity:** low
+- **Discovered:** 2026-06-30 by WP-14 build agent (inbox L7)
+- **Ref:** `ts/routes/speedrun-dashboard/` (`SpeedrunDashboard.svelte`, `[...deckId]/+page.*`)
+- **Context:** the dashboard route is functional and honesty-faithful (three cards, Wilson-CI bars, abstain panel with no Readiness number, always-visible "LR-only estimate" badge), but the UI is minimal: no interactive **deck picker** (deck_id comes from the route param), **English literals** (no `ftl` i18n), no dark-mode polish/animations, and no calibration/paraphrase chart integration.
+- **Resolution:** add a deck picker + i18n strings + visual polish; wire the proof-eval charts (WP-16) when they produce output.
+- **Links:** WP-14; spec-measurement §8; WP-16.
 
 ---
 

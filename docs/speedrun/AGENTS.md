@@ -15,14 +15,16 @@
 > **The build env is now unblocked** ([B008](./backlog.md)
 > resolved): space-free path, Rust 1.92, `out/` build == HEAD, `anki` v26.05 imports, and the
 > whole offline suite is green (198 passed). **WP-0a desktop build + WP-2 proto contract + the
-> WP-3/4/5 engine core + the WP-6 reviewer + WP-7 measurement have all landed on `main`**
-> (merged; combined `just build` + `just test-rust` + `just test-py` green): **WP-3** fresh-item
-> draw + served-item sidecar, **WP-4** interleaving (`InterleavedSkills` order + deck-options
-> toggle), **WP-5** `skill_mastery`, **WP-6** desktop reviewer (commit-then-reveal Level 1 done;
-> Level-2 drawn-item wired, needs live-GUI verification), **WP-7** `readiness_gate` (pure fn) +
-> Memory score — all additive, zero schema change, FSRS + answer path reused. **Next: WP-14
-> (3-score dashboard — makes the scores visible + wires Memory to Python) and WP-0b (AnkiDroid
-> build, still needs the dev's machine — [B001](./backlog.md)).**
+> WP-3/4/5 engine + WP-6 reviewer + WP-7 measurement + **WP-14 dashboard** have all landed on
+> `main`** (merged; combined `just build` + `just test-rust` + `just test-py` + `just test-ts` green):
+> **WP-3** fresh-item draw + sidecar, **WP-4** interleaving + deck-options toggle, **WP-5**
+> `skill_mastery`, **WP-6** desktop reviewer (commit-then-reveal Level 1; Level-2 wired, needs
+> live-GUI verify), **WP-7** `readiness_gate` + Memory, **WP-14** Performance (Wilson) + Readiness
+> (abstain-gated) + the **3-score dashboard** (`ts/routes/speedrun-dashboard/`) via the
+> `SpeedrunDashboard` RPC — all additive, zero schema change, FSRS + answer path reused. **The
+> desktop app now runs the full loop and shows the scored dashboard** (a demo seed deck is in the
+> local profile). **Next: WP-0b (AnkiDroid build — dev's machine, [B001](./backlog.md)), WP-10
+> (sync), the Friday AI wiring (WP-13), and the proof lane (WP-16/17/18).**
 >
 > This is the **Speedrun project's** front door. It is *not* the repo-root
 > `AGENTS.md` (that's upstream Anki's build doc → `CLAUDE.md`).
@@ -55,7 +57,7 @@ _Newest first._
 | Path | What |
 |---|---|
 | [`prd-speedrun.md`](./prd-speedrun.md) | User-facing contract: the 3 scores, honesty/give-up rules, ACs, edge-cases |
-| [`decisions.md`](./decisions.md) | Decision log D-SR1…30 (append-only; **next free ID: D-SR31**) |
+| [`decisions.md`](./decisions.md) | Decision log D-SR1…32 (append-only; **next free ID: D-SR33**) |
 | [`spec-engine.md`](./spec-engine.md) | The Rust change: skill-as-card interleaving + fresh-item draw, mastery query, data model |
 | [`spec-measurement.md`](./spec-measurement.md) | Memory/Performance/Readiness models, the give-up gate, evals |
 | [`spec-sync-mobile.md`](./spec-sync-mobile.md) | Self-hosted sync, conflict rule, AnkiDroid companion |
@@ -69,7 +71,7 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 
 ## Conventions that bite
 
-- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR31**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B032**).
+- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR33**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B033**).
 - **Frozen docs:** the PRD + specs are one-and-done. Don't edit them to track drift — record changes as a **new decision** + an **Overrides** line here.
 - **Engine invariants** (don't break these — they're the project's whole thesis + grade):
   - **Zero schema change.** Ride existing tables + `Card.custom_data`/tags; no schema-version bump (keeps sync/downgrade/`dbcheck` safe and upstream rebases cheap). [D-SR4]
@@ -80,23 +82,24 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 
 ## Current focus
 
-**Wednesday core is essentially built:** WP-0a desktop + WP-2 contract + WP-3/4/5 engine +
-**WP-6 reviewer** (commit-then-reveal Level 1; Level-2 drawn-item wired) + **WP-7** (`readiness_gate`
-pure fn + Memory score) are all merged to `main`; combined `just build` + `just test-rust` +
-`just test-py` are green. **The desktop review loop is runnable** (`just run`) once a populated
-Speedrun deck is in the profile — the live profile is still empty, so build/import the seed deck to
-demo. **Next:** **WP-14** (3-score dashboard — makes Memory/Performance/Readiness visible, wires
-Memory→Python per B031) and **WP-0b (AnkiDroid build)** (dev's machine; #1 risk [B001](./backlog.md));
-then WP-10 (sync) and the Friday AI wiring (WP-13). **Verify:** WP-6 Level-2 needs a live-GUI pass
-(open a Speedrun deck; confirm no reveal before commit). Deadlines: **Wed** core (no AI) · **Fri**
-AI + sync · **Sun** prove + ship. *(`main` is ahead of `origin/main` by local merges — push when ready.)*
+**Wednesday core + the 3-score dashboard are built** (desktop, no AI): WP-0a desktop + WP-2 contract
++ WP-3/4/5 engine + **WP-6 reviewer** + **WP-7 gate/Memory** + **WP-14 Performance/Readiness +
+dashboard** are all merged to `main`; combined `just build` + `just test-rust` + `just test-py` +
+`just test-ts` are green. **The desktop app runs the full interleaved commit-then-reveal loop and
+shows the scored dashboard** (Memory / Performance / Readiness-or-Abstain) — a demo seed deck is in
+the local profile (`User 1`; synthetic + thin coverage, so Readiness will honestly abstain).
+**Next:** **WP-0b (AnkiDroid build)** — the remaining #1 risk, needs the dev's machine
+([B001](./backlog.md)) — plus **WP-10 (sync)**, the **Friday AI wiring** (WP-13; WP-11/12 exist as
+offline tools), and the proof lane (WP-16 evals / WP-17 ablation / WP-18 bench). **Verify on device:**
+WP-6 Level-2 needs a live-GUI pass. Deadlines: **Wed** core (no AI) · **Fri** AI + sync · **Sun**
+prove + ship. *(`main` is ahead of `origin/main` by local merges — push when ready.)*
 
-**Resolved this round:** **WP-6 + WP-7 landed** → promoted **D-SR29** (Memory bootstrap band;
-exposure→WP-14) + **D-SR30** (drawn-item render via Python injection, overrides spec-engine §8).
-**New backlog:** B027 (no keyboard commit), B028 (empty-pool silent fallback), B029 (render-mechanism
-deviation), B030 (auto-advance off for Speedrun), B031 (Memory not yet in Python). **Earlier:**
-WP-3/4/5 (→D-SR27/28), B008 (env), WP-2, B021/B016. **Still open:** B013 (`variant_of`) · B012
-(real-LLM — Friday) · B001 (mobile) · B023/B026 (fmt/lint debt) · WP-6 GUI verification.
+**Resolved this round:** **WP-14 landed** → promoted **D-SR31** (revlog ease→outcome mapping,
+resolves the ease half of B014) + **D-SR32** (Readiness band/confidence/coverage method + combined
+`SpeedrunDashboard` RPC); **B031 fixed** (Memory now exposed to Python). **New backlog:** B032
+(dashboard UI minimal — deck-picker/i18n/polish deferred). **Earlier:** WP-6/7 (→D-SR29/30,
+B027–B030), WP-3/4/5 (→D-SR27/28), B008/WP-2. **Still open:** B013 (`variant_of`) · B012 (real-LLM —
+Friday) · B001 (mobile) · B023/B026 (fmt/lint debt) · B014 (`split.py`) · WP-6 GUI verification.
 
 ---
 

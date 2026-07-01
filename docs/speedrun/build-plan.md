@@ -46,7 +46,7 @@
 | WP-11 | AI tagging (anchor eval + baselines) | 2 | AI | offline landed ✅ (stub LLM; real model pending B012/B018) |
 | WP-12 | AI-card-check + injection guard | 2 | AI | offline landed ✅ (stub LLM; real model pending B012) |
 | WP-13 | AI-off mode wiring | 2 | AI | not started |
-| WP-14 | Performance + Readiness + dashboard | 2 | Measurement | not started |
+| WP-14 | Performance + Readiness + dashboard | 2 | Measurement | landed ✅ (merged; Wilson Perf + abstain-gated Readiness + `SpeedrunDashboard` RPC + ts route; 10 tests; resolves B031; UI minimal B032) |
 | WP-15 | Mobile two-way sync + scores on phone | 2 | Mobile | not started |
 | WP-16 | Proof evals (calibration/paraphrase/leakage) | 3 | Evals | offline harnesses landed ✅ (wiring gaps B013/B014) |
 | WP-17 | Interleaving ablation (3 builds) | 3 | Study-feature | not started |
@@ -349,7 +349,7 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 - **Parallel-safe with:** Sync, Measurement-UI.
 
 ### WP-14 — Performance + Readiness + dashboard
-- **Lane:** Measurement · **Depends on:** WP-5, WP-7, WP-1 (weights/conversion) · **Status:** not started
+- **Lane:** Measurement · **Depends on:** WP-5, WP-7, WP-1 (weights/conversion) · **Status:** done (merged to main 2026-06-30; `rslib/src/stats/performance.rs`, `SpeedrunDashboard` RPC, `ts/routes/speedrun-dashboard/`; 10 tests). Perf=Wilson/skill, Readiness abstain-gated + band (D-SR31/D-SR32). Resolves B031; dashboard UI minimal → B032.
 - **Goal:** Performance (Wilson per skill from skill revlog) + Readiness (perf-weighted coverage → conversion + band + confidence + next-best-thing) + coverage; the **dashboard** (3 cards + abstain panel) in `ts/routes/`.
 - **Touches:** `rslib/src/` measurement, `ts/routes/` (new dashboard route).
 - **Acceptance:** spec-measurement AC 1,3,4; PRD AC 9.C; D-SR2, D-SR9.

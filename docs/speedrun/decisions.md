@@ -28,6 +28,7 @@
 | Build · wave 1 | D-SR17–D-SR26 | taxonomy, readiness, card-check, leakage, trap scheduling, tag form, tagging eval |
 | Build · wave 2 (engine) | D-SR27, D-SR28 | skill-identity resolution, mastery threshold |
 | Build · wave 3 (measure/reviewer) | D-SR29, D-SR30 | Memory band + exposure, drawn-item render mechanism |
+| Build · wave 4 (dashboard) | D-SR31, D-SR32 | revlog ease→outcome mapping, Readiness band/confidence/coverage method |
 
 ---
 
@@ -310,6 +311,29 @@
 - **Gaps / risks:** AnkiDroid (WP-8/WP-15) can't reuse a Python-only render → mobile needs either the RPC path or its own injection; revisit for cross-platform parity (→ B029). Overrides spec-engine §8's stated *mechanism*, not its intent.
 - **Overrides:** spec-engine §8 (see `AGENTS.md` → "Overrides since the plan").
 - **Ref:** `qt/aqt/speedrun.py`, `qt/aqt/reviewer.py`, spec-engine §8, D-SR3; inbox WP-6 L5; B029.
+
+---
+
+> **Build · wave 4 (dashboard, D-SR31–D-SR32)** — promoted from the WP-14 build agent
+> (2026-06-30), after its branch merged to `main`.
+
+### D-SR31 — Revlog ease→outcome mapping: ease ≥ 2 = correct, ease == 1 (Again) = wrong
+
+- **Status:** resolved
+- **Decided:** 2026-06-30, WP-14 build agent (inbox L1); resolves the ease-mapping half of B014
+- **Chose:** For Performance (and eval outcomes), a skill-card revlog row counts as **correct iff `ease ≥ 2`**; `ease == 1` (Again) is wrong; only `ease BETWEEN 1 AND 4` rows count (manual-reschedule `ease = 0` excluded). Mirrors Anki's own "true retention" stat and the WP-6 reviewer's `wrong→Again(1) / right→Good(3)` convention (D-SR3 §5.1) — so Hard(2) counts as correct (retrieval succeeded, if slow).
+- **Considered:** treating Hard(2) as wrong (penalizes effort, diverges from Anki retention); a recency-weighted / hard-penalized variant (phase-2).
+- **Gaps / risks:** Hard=correct can slightly inflate Performance for Hard-heavy users; revisit in phase-2. This is the same mapping the WP-16 eval README assumed (B014) — now canonical.
+- **Ref:** `rslib/src/storage/card/speedrun.rs::skill_revlog_in_decks`, spec-measurement §4.2, D-SR3; inbox WP-14 L1; B014.
+
+### D-SR32 — Readiness band / confidence / coverage method (v1)
+
+- **Status:** resolved (tunable constants)
+- **Decided:** 2026-06-30, WP-14 build agent (inbox L2/L4/L5/L6/L8)
+- **Chose:** The dashboard is one combined **`SpeedrunDashboard(deck_id)`** RPC returning Memory + per-skill Performance + Readiness-or-Abstain, with an **`eligible` flag that callers MUST check before rendering any Readiness number** (the honesty-critical field, D-SR10). Readiness math (when eligible): **band = Wilson-width component (`Σ w_S·N_lr·(wilson_high−wilson_low)/2`) + coverage-gap component (`(1−coverage)·N_lr·0.5`)**, both projected LR→full-form by **×(76/50)** (Option B, D-SR19); both components shrink as N↑/coverage↑ (satisfies the "band widens as data thins" AC). **Confidence tiers:** high (coverage ≥ 85% AND ≥ 500 attempts), medium (≥ 65% AND ≥ 300), else low. **LR coverage** = fraction of the 13 `type::*` question-types with ≥ 5 attempts (`skill::*`/`trap::*` show per-skill Performance but don't count toward coverage/the gate).
+- **Considered:** three separate RPCs (more round-trips); coverage counting `skill::`/`trap::` (diverges from the weighted LR taxonomy, D-SR12); coverage-gap coefficient 1.0 (max-conservative) — chose 0.5 as the intermediate.
+- **Gaps / risks:** the band coefficient and confidence thresholds are informed judgment calls, not calibrated — revisit with WP-17 ablation / real data. Coverage uses "≥5 attempts" rather than spec §5's "pool ≥ min size AND ≥ min attempts"; acceptable for v1.
+- **Ref:** `rslib/src/stats/performance.rs`, `proto/anki/stats.proto` (`SpeedrunDashboard`), `docs/speedrun/data/weights.json`, spec-measurement §4.3/§5/§8, D-SR9/D-SR10/D-SR18/D-SR19; inbox WP-14 L2/L4/L5/L6/L8.
 
 ---
 
