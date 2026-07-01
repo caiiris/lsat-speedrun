@@ -77,9 +77,9 @@ in graphs-base.scss.  Stock Anki (no ?sr param) is completely unchanged.
     // this route) rather than relying on graphs-base.scss.
     :global(body.speedrun-stats) {
         background: #f5f7fa;
-        // Body text uses the Home/practice grotesk stack (not Anki's default),
-        // so labels, legends and controls match the practice-questions UI.
-        font-family: -apple-system, "Inter", "Helvetica Neue", Arial, sans-serif;
+        // Body text uses the EXACT drill grotesk stack (speedrun.py), so labels,
+        // legends and controls match the practice-questions UI.
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         color: #1b2430;
     }
 
@@ -92,7 +92,7 @@ in graphs-base.scss.  Stock Anki (no ?sr param) is completely unchanged.
         padding: 0.7em 1.5em;
         background: #ffffff;
         border-bottom: 1px solid #dde2e9;
-        font-family: -apple-system, "Inter", "Helvetica Neue", Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     .sr-stats-brand {

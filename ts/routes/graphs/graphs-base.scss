@@ -16,8 +16,10 @@ html {
 //
 // Strategy: override Anki's CSS custom properties so all child components
 // (TitledContainer, RangeBox, etc.) inherit the Speedrun palette without
-// touching shared component files.  Chart D3 internals are left at their
-// default colors (hardcoded in TS); only page/card/typography is restyled.
+// touching shared component files.  Chart D3 series colours are additionally
+// recoloured to the drill palette in card-counts.ts + reviews.ts (both gated on
+// this same body.speedrun-stats class); other graphs still use Anki's defaults
+// (tracked as backlog B042).
 //
 // Palette (spec-ui §2):
 //   cool pale paper  #F5F7FA   slate ink  #1B2430
@@ -28,7 +30,7 @@ body.speedrun-stats {
     // Page background: cool pale paper
     background: #f5f7fa !important;
     color: #1b2430;
-    font-family: -apple-system, "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
     // ── CSS variable overrides (cascade to all child components) ─────────────
     // These override the Anki token system so TitledContainer, RangeBox, etc.
@@ -43,12 +45,20 @@ body.speedrun-stats {
     --border-focus: #3e3a8c;     // indigo focus ring
     --shadow-focus: rgba(62, 58, 140, 0.25); // indigo focus glow
 
+    // State colours (TodayStats numbers, card-counts.scss) → drill palette
+    --state-new: #3e3a8c;        // indigo
+    --state-learn: #c99a2e;      // amber
+    --state-review: #2e7d5b;     // green
+
     // ── Card headings (TitledContainer h1) ───────────────────────────────────
+    // Matches the drill's prominent grotesk heading (speedrun.py). Kept in sync
+    // with TitledContainer.svelte's scoped rule.
     h1 {
-        font-family: -apple-system, "Inter", "Helvetica Neue", Arial, sans-serif;
-        font-size: 0.9rem;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 1.05rem;
         font-weight: 700;
-        letter-spacing: -0.01em;
+        letter-spacing: normal;
+        text-transform: none;
         color: #3e3a8c;           // indigo accent for card titles
         border-bottom-color: #dde2e9;
         padding-bottom: 0.4em;

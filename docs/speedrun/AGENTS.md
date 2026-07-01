@@ -33,7 +33,7 @@
 
 1. **This file** — current project state + the override ledger.
 2. **Decision log** [`decisions.md`](./decisions.md) — latest non-superseded entry wins.
-3. **Iterations log** — *not created yet* (appears at first build/test-driven change).
+3. **Iterations log** [`design-iterations.md`](./design-iterations.md) — feedback-/test-driven surface changes (next free: **DI-SR2**).
 4. **PRD / specs** — *original intent, written before implementation* ([`prd-speedrun.md`](./prd-speedrun.md), `spec-*.md`). **Frozen.** Superseded wherever a later decision or an "Overrides" entry below says so. **When a spec and a decision conflict, the decision wins — do not defer to the PRD.**
 
 ## Overrides since the plan
@@ -65,6 +65,7 @@ _Newest first._
 | [`spec-sync-mobile.md`](./spec-sync-mobile.md) | Self-hosted sync, conflict rule, AnkiDroid companion |
 | [`spec-ai.md`](./spec-ai.md) | AI honesty contract, anchor tagging eval, card-check, injection guard |
 | [`build-plan.md`](./build-plan.md) | Dispatcher output: work packages WP-0…WP-19, phases, deps, parallel lanes |
+| [`design-iterations.md`](./design-iterations.md) | Feedback-/test-driven surface changes (DI-SR1…; **next free: DI-SR2**) |
 | [`backlog.md`](./backlog.md) | Known gaps / risks / open issues (B001…) |
 | [`../lsat-speedrun-brainlift.md`](../lsat-speedrun-brainlift.md) | Research grounding (pedagogy, psychometrics, AI) |
 | [`../../extra/architecture/ANKI_ARCHITECTURE.md`](../../extra/architecture/ANKI_ARCHITECTURE.md) | How the upstream Anki engine works (git-ignored) |

@@ -41,6 +41,28 @@ const barColours = [
     "grey", /* buried */
 ];
 
+// Speedrun WP-27: recolour the card-counts pie + legend to the drill palette
+// (docs/speedrun/spec-ui §2) when the Speedrun stats theme is active.  Gated on
+// the body.speedrun-stats class set by the Speedrun stats page, so stock Anki is
+// completely unaffected.  Order matches barColours: new, learn, relearn, young,
+// mature, suspended, buried.
+const speedrunBarColours = [
+    "#3E3A8C", /* new — indigo accent */
+    "#C99A2E", /* learn — amber */
+    "#B4472E", /* relearn — clay */
+    "#5FA98A", /* young — light green */
+    "#2E7D5B", /* mature — deep green */
+    "#8388B8", /* suspended — muted indigo (inactive) */
+    "#B0B5BF", /* buried — grey (inactive) */
+];
+
+function pieColours(): string[] {
+    if (typeof document !== "undefined" && document.body?.classList.contains("speedrun-stats")) {
+        return speedrunBarColours;
+    }
+    return barColours;
+}
+
 function countCards(data: GraphsResponse, separateInactive: boolean): Count[] {
     const countData = separateInactive ? data.cardCounts!.excludingInactive! : data.cardCounts!.includingInactive!;
 
@@ -143,6 +165,7 @@ export function renderCards(
     const radius = bounds.height / 2 - bounds.marginTop - bounds.marginBottom;
     const arcGen = arc().innerRadius(0).outerRadius(radius);
     const trans = svg.transition().duration(600) as any;
+    const colours = pieColours();
 
     paths
         .attr("transform", `translate(${radius},${radius + bounds.marginTop})`)
@@ -153,7 +176,7 @@ export function renderCards(
                 enter
                     .append("path")
                     .attr("fill", (_d, idx) => {
-                        return barColours[idx];
+                        return colours[idx];
                     })
                     .attr("d", arcGen as any),
             function(update) {
@@ -178,7 +201,7 @@ export function renderCards(
                 label: d.label,
                 count: localizedNumber(d.count),
                 percent: `${percent}%`,
-                colour: barColours[idx],
+                colour: colours[idx],
                 query: d.query,
             } satisfies TableDatum)
             : [];

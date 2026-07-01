@@ -22,6 +22,7 @@ import {
     interpolateOranges,
     interpolatePurples,
     interpolateReds,
+    interpolateRgb,
     max,
     min,
     pointer,
@@ -201,18 +202,33 @@ export function renderReviews(
         x.domain() as any,
     );
 
+    // Speedrun WP-27: recolour the review bars/series to the drill palette
+    // (docs/speedrun/spec-ui §2) when the Speedrun stats theme is active.  Gated
+    // on body.speedrun-stats; stock Anki keeps the default d3 scheme colours.
+    // Each series is a light→saturated ramp so older bars read lighter, matching
+    // Anki's original visual grammar.
+    const speedrun = typeof document !== "undefined"
+        && document.body?.classList.contains("speedrun-stats");
+    const srRamp = (light: string, dark: string, range = cappedRange) =>
+        scaleSequential((n) => interpolateRgb(light, dark)(range(n)!)).domain(x.domain() as any);
+    const srMature = srRamp("#9AC4B2", "#2E7D5B", shiftedRange); // deep green
+    const srYoung = srRamp("#CFE3D8", "#5FA98A"); // light green
+    const srLearn = srRamp("#EAD6A6", "#C99A2E"); // amber
+    const srRelearn = srRamp("#DDB0A3", "#B4472E"); // clay
+    const srFiltered = srRamp("#BCB9DC", "#3E3A8C"); // indigo
+
     function binColor(idx: BinIndex): ScaleSequential<string> {
         switch (idx) {
             case BinIndex.Mature:
-                return darkerGreens;
+                return speedrun ? srMature : darkerGreens;
             case BinIndex.Young:
-                return lighterGreens;
+                return speedrun ? srYoung : lighterGreens;
             case BinIndex.Learn:
-                return oranges;
+                return speedrun ? srLearn : oranges;
             case BinIndex.Relearn:
-                return reds;
+                return speedrun ? srRelearn : reds;
             case BinIndex.Filtered:
-                return purples;
+                return speedrun ? srFiltered : purples;
         }
     }
 

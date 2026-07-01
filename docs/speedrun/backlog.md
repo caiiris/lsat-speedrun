@@ -416,13 +416,17 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 - **Resolution:** on session-dialog close, signal the Home to reload (re-`moveToState("speedrunHome")` or a JS refresh hook).
 - **Links:** WP-26; D-SR37; WP-22.
 
-### B042 — Reskinned Stats: D3 chart series colors + calendar heatmap still default (not Speedrun palette)
+### B042 — Reskinned Stats: some D3 chart series colors + calendar heatmap still default (not Speedrun palette)
 
-- **Type:** issue · **Status:** open · **Severity:** low
+- **Type:** issue · **Status:** open (partially addressed) · **Severity:** low
 - **Discovered:** 2026-07-01 by WP-27 build agent (deferred)
-- **Ref:** `ts/routes/graphs/graphs-base.scss` (`body.speedrun-stats`), the graph TS (`reviews.ts`, `intervals.ts`, `CalendarGraph`)
-- **Context:** WP-27 reskins the Stats page chrome (background, cards, headings, controls, accent) to Speedrun, but the **chart series colors** (D3 `interpolate*`, hardcoded in TS) and the **calendar heatmap** palette are still Anki defaults — recoloring needs chart-logic edits, out of scope for the CSS-only reskin.
-- **Resolution:** recolor the D3 series + heatmap toward the Speedrun palette (indigo primary) when polishing.
+- **Ref:** `ts/routes/graphs/graphs-base.scss` (`body.speedrun-stats`), the graph TS (`card-counts.ts`, `reviews.ts`, `intervals.ts`, `CalendarGraph`, `EaseGraph`, etc.)
+- **Context:** WP-27 reskins the Stats page chrome (background, cards, headings, controls, accent) to Speedrun, but the **chart series colors** (D3 `interpolate*`/`scheme*`, hardcoded in TS) were initially left at Anki defaults.
+- **Update 2026-07-01 (user feedback "these two clearly have a different style"):** recolored the two always/most-visible charts to the drill palette (spec-ui §2), gated on `body.speedrun-stats` so stock Anki is untouched:
+  - **Card Counts** pie + legend → `speedrunBarColours` (indigo/amber/clay/green/muted) in `card-counts.ts`.
+  - **Reviews** bars/series → indigo·green·amber·clay ramps in `reviews.ts` (`binColor`).
+  - `--state-new/learn/review` tokens overridden (TodayStats numbers), card titles switched from Georgia serif → the drill's mono uppercase eyebrow treatment.
+- **Remaining:** calendar heatmap + the less-visible graphs (intervals, ease, difficulty, retrievability, stability, hourly, buttons, added, future-due) still use Anki's default d3 colors. Mostly empty on the demo deck; retheme the same way when polishing.
 - **Links:** WP-27; spec-ui §2.
 
 ---

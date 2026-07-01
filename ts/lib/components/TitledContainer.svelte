@@ -83,14 +83,17 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
         border-radius: 16px;
         box-shadow: 0 2px 12px rgba(27, 36, 48, 0.07);
     }
-    // Card titles use the practice-questions signature serif (Georgia), matching
-    // the drill stimulus + the Home "Today's focus" heading.
+    // Card titles match the drill's prominent heading EXACTLY (the indigo grotesk
+    // prompt "In one line, what must the right answer do?" — speedrun.py): same
+    // sans stack, weight 700, ~1.05rem, indigo, sentence case, normal tracking.
     :global(body.speedrun-stats) h1 {
         color: #3e3a8c;
-        font-family: "Georgia", "Palatino Linotype", "Book Antiqua", serif;
-        font-size: 1.25rem;
-        font-weight: 600;
-        letter-spacing: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: normal;
+        text-transform: none;
         border-bottom-color: #eceff3;
+        padding-bottom: 0.4em;
     }
 </style>
