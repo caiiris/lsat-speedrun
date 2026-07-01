@@ -1,7 +1,7 @@
 // Copyright: Ankitects Pty Ltd and contributors
 // License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
-//! Speedrun WP-5/WP-7 storage helpers.
+//! Speedrun WP-5/WP-7/WP-14 storage helpers.
 //!
 //! **WP-5:** `skill_cards_in_decks` — fetches LSAT Skill card rows for the
 //! mastery aggregate (see `rslib/src/stats/service.rs`).
@@ -9,12 +9,28 @@
 //! **WP-7:** `meta_cards_in_decks` — fetches LSAT Meta card rows for the
 //! Memory score (see `rslib/src/stats/measurement.rs`).
 //!
-//! Both use a single indexed SQL query over `cards JOIN notes JOIN notetypes`;
-//! aggregation and FSRS recall are computed in Rust.
+//! **WP-14:** `skill_revlog_in_decks` — fetches per-review rows for LSAT
+//! Skill cards (note tags + button_chosen) for the Performance score.
+//!
+//! All use a single indexed SQL query over `cards JOIN notes JOIN notetypes`;
+//! aggregation is computed in Rust.
 
 use crate::decks::DeckId;
 use crate::error::Result;
 use crate::storage::ids_to_string;
+
+/// Per-review row returned by [`SqliteStorage::skill_revlog_in_decks`].
+///
+/// Contains the note's identity tags and the button chosen in each review
+/// of a skill card, so Performance can be computed without any additional
+/// SQL round-trips.
+pub(crate) struct SkillRevlogRow {
+    /// Space-delimited note tag string (may include leading/trailing space).
+    pub note_tags: String,
+    /// The rating button chosen in this review (1=Again, 2=Hard, 3=Good, 4=Easy).
+    /// ease==1 (Again) → wrong; ease>=2 → correct (mirrors the eval convention).
+    pub button_chosen: u32,
+}
 
 /// Minimal projection returned by [`SqliteStorage::skill_cards_in_decks`].
 ///
@@ -32,6 +48,48 @@ pub(crate) struct SkillCardRow {
 }
 
 impl super::super::SqliteStorage {
+    /// Return one [`SkillRevlogRow`] per review of an LSAT Skill card in the
+    /// given deck hierarchy.
+    ///
+    /// Joins `revlog → cards → notes → notetypes` so that the skill identity
+    /// tag and button_chosen rating come back in a single round-trip.  Used by
+    /// the WP-14 Performance computation (see `rslib/src/stats/performance.rs`).
+    ///
+    /// Only reviews with `button_chosen` in {1,2,3,4} are returned
+    /// (manual rescheduling rows with button_chosen=0 are excluded).
+    pub(crate) fn skill_revlog_in_decks(
+        &self,
+        deck_ids: &[DeckId],
+    ) -> Result<Vec<SkillRevlogRow>> {
+        if deck_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let mut sql = String::from(
+            "SELECT n.tags, r.ease \
+             FROM revlog r \
+             JOIN cards c ON r.cid = c.id \
+             JOIN notes n ON c.nid = n.id \
+             WHERE c.did IN ",
+        );
+        ids_to_string(&mut sql, deck_ids.iter().map(|d| d.0));
+        sql.push_str(
+            " AND n.mid = (SELECT id FROM notetypes WHERE name = 'LSAT Skill') \
+             AND r.ease BETWEEN 1 AND 4 \
+             ORDER BY r.id",
+        );
+
+        self.db
+            .prepare_cached(&sql)?
+            .query_and_then([], |row| {
+                Ok(SkillRevlogRow {
+                    note_tags: row.get(0)?,
+                    button_chosen: row.get::<_, u32>(1)?,
+                })
+            })?
+            .collect()
+    }
+
     /// Return one [`SkillCardRow`] per LSAT Skill card whose `did` is in
     /// `deck_ids` (the target deck + all child decks).
     ///

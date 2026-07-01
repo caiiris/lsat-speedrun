@@ -1,0 +1,14 @@
+// Copyright: Ankitects Pty Ltd and contributors
+// License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+//
+// Base styles for the Speedrun dashboard page.
+
+@use "sass:math";
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    background: var(--canvas, #fafafa);
+    color: var(--fg, #222);
+}

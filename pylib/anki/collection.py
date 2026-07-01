@@ -1034,6 +1034,27 @@ class Collection(DeprecatedNamesMixin):
         """
         return list(self._backend.skill_mastery(deck_id=deck_id))
 
+    def speedrun_dashboard(
+        self, deck_id: int
+    ) -> stats_pb2.SpeedrunDashboardResponse:
+        """Speedrun WP-14: three-score dashboard (Memory + Performance + Readiness).
+
+        Returns a SpeedrunDashboardResponse with:
+        - memory: mean FSRS recall over LSAT Meta cards + 95% bootstrap CI.
+        - skill_perf: per-skill Wilson accuracy from the skill-card revlog.
+        - overall_perf: frequency-weighted mean Performance (covered skills).
+        - lr_coverage: fraction of 13-type LR taxonomy with ≥5 attempts.
+        - total_attempts: total skill-card reviews seen.
+        - eligible: True only when both gate thresholds are met (≥200 att, ≥50% cov).
+        - abstain: abstain payload (no Readiness number) when eligible=False.
+        - readiness: LR-only projected score (120-180) + band when eligible=True.
+
+        The dashboard MUST NOT display a Readiness number when eligible=False
+        (D-SR10, spec-measurement §6, PRD §3).  See decisions.md D-SR18/D-SR19
+        for the formula and the LR-only label requirement.
+        """
+        return self._backend.speedrun_dashboard(deck_id=deck_id)
+
     def studied_today(self) -> str:
         return self._backend.studied_today()
 
