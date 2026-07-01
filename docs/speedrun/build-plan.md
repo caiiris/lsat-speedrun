@@ -52,6 +52,10 @@
 | WP-17 | Interleaving ablation (3 builds) | 3 | Study-feature | not started |
 | WP-18 | One-command benchmark + perf targets | 3 | Bench | not started |
 | WP-19 | Packaging (APK/TestFlight + installer + crash) | 3 | Packaging | not started |
+| WP-20 | Home study-plan surface (reshape WP-14 dashboard → home) | UX | Desktop-UI | not started |
+| WP-21 | Drill interaction surface (prephrase + name-the-trap; reshape WP-6) | UX | Desktop-Reviewer | not started |
+| WP-22 | Session layer + result/blind-review (drills/mixed/timed) | UX | Desktop-UI | not started |
+| WP-23 | RC passage workspace | UX | Desktop-UI | deferred (phase-2) |
 
 ## Dependency graph
 
@@ -393,6 +397,64 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 - **Touches:** `qt/installer`, AnkiDroid release config, `tools/crash/`.
 - **Acceptance:** PRD AC 9.F(21), 9.B; assignment Sunday handin.
 - **Parallel-safe with:** evals/bench (different lane).
+
+---
+
+# UX Reframe wave — post-pivot (WP-20…WP-23)
+
+> Turns [`spec-ui.md`](./spec-ui.md) (D-SR33/D-SR34/D-SR35) into work packages. **Presentation
+> layer only** — no Rust / proto / schema changes; these consume the *existing* engine calls
+> (`draw_item_for_skill`, `AnswerCard`, `SpeedrunDashboard`) that already landed. All additive.
+> These reshape the front-ends of the (merged) WP-6 and WP-14 rather than replacing the engine.
+>
+> **Isolation:** front-end only (`ts/` + `qt/aqt`), so no worktree needed for feature isolation,
+> but they **collide in `ts/`** — sequence per *Collision* notes below. **Build/verify:**
+> `just build` + `just test-ts` + `just check`; GUI states need a live-desktop pass (headless
+> can't drive Qt). Model: Sonnet 4.6.
+
+### Collision & sequencing
+- **WP-21 → WP-22:** the session layer *drives* the drill component, so land WP-21 (the item
+  interaction) first, then WP-22 (the session controller that loops it).
+- **WP-20 ‖ WP-21:** home vs. drill are different components → parallel-safe.
+- All three touch `ts/routes/` / `ts/reviewer/`; keep each in its own files and merge in order
+  WP-21 → WP-22, WP-20 anytime.
+
+### WP-20 — Home study-plan surface
+- **Lane:** Desktop-UI · **Depends on:** WP-14 (dashboard RPC, done) · **Status:** not started
+- **Goal:** Reshape the `speedrun-dashboard` route into the **Home** (spec-ui §3.1): the three
+  scores with the honest **abstain panel**, **"Today's focus"** = the dashboard's next-best-thing
+  with a primary "Start targeted drill", the session-type launchers, and the per-type **skill map**.
+  Make Home the entry point (not Anki's deck list).
+- **Touches:** `ts/routes/speedrun-dashboard/` (→ home), `qt/aqt` entry wiring; consumes
+  `SpeedrunDashboard` (no new RPC). **Design language per spec-ui §2.**
+- **Acceptance:** spec-ui §3.1; three scores render, Readiness abstains with evidence (D-SR10),
+  one recommended drill launches a session; no deck-list surface reachable in the Speedrun flow.
+
+### WP-21 — Drill interaction surface (prephrase + name-the-trap)
+- **Lane:** Desktop-Reviewer · **Depends on:** WP-6 (reviewer, done), WP-3 (draw) · **Status:** not started
+- **Goal:** Extend the WP-6 commit-then-reveal surface (spec-ui §3.2, D-SR34): add the **prephrase**
+  state (choices hidden until predicted; self-scored on reveal), the **name-the-trap** amber chips
+  on a wrong commit (**deterministic** vs `TrapChoiceX` — no AI), the **reasoning map** rail, an
+  optional **confidence** tap, and finish de-Anki'ing the chrome. **MC commit stays the graded
+  signal** (unchanged answer path).
+- **Touches:** `qt/aqt/speedrun.py`, `qt/aqt/reviewer.py`, `ts/reviewer/`.
+- **Acceptance:** spec-ui §3.2; prephrase→self-check works; trap-ID auto-checked; no ease
+  buttons / "Show Answer"; existing normal-Anki review still unaffected (gated on notetype).
+
+### WP-22 — Session layer + result / blind-review
+- **Lane:** Desktop-UI · **Depends on:** WP-21, WP-20, WP-4 (interleave) · **Status:** not started
+- **Goal:** A `ts/` **session controller** (D-SR35): build a bounded session (targeted / mixed /
+  timed / blind-review) from the due-skill queue + draws, run the item loop through WP-21, add a
+  **timer** for timed sections, then the **set-result** screen ("where you slipped" + flag-to-revisit)
+  and the **blind-review** re-run of misses. Session accuracy is display-only.
+- **Touches:** new `ts/routes/` session components + state; reuses WP-21's drill component.
+- **Acceptance:** spec-ui §3.3 + D-SR35; a 10-item drill runs end-to-end → result → blind review;
+  timed mode hides prephrase/chips; Performance still derives from the revlog (not the screen).
+
+### WP-23 — RC passage workspace  *(deferred — phase-2)*
+- **Lane:** Desktop-UI · **Depends on:** WP-21, RC content · **Status:** deferred
+- **Goal:** Passage + question-set **workspace** (spec-ui §3.4) under the same draw model
+  (reading pane + annotation beside commit-then-reveal). Design captured; build in phase-2 with RC items (D-SR12).
 
 ---
 

@@ -29,7 +29,7 @@
 | Build · wave 2 (engine) | D-SR27, D-SR28 | skill-identity resolution, mastery threshold |
 | Build · wave 3 (measure/reviewer) | D-SR29, D-SR30 | Memory band + exposure, drawn-item render mechanism |
 | Build · wave 4 (dashboard) | D-SR31, D-SR32 | revlog ease→outcome mapping, Readiness band/confidence/coverage method |
-| Product · UX reframe | D-SR33, D-SR34 | presentation reframe (study-plan, not a deck), LR drill interaction model |
+| Product · UX reframe | D-SR33, D-SR34, D-SR35 | presentation reframe (study-plan, not a deck), LR drill interaction model, session/review flow |
 
 ---
 
@@ -367,6 +367,20 @@
 - **Grounding (learning science):** the *generation effect* / prephrasing (produce before recognizing); *error-driven learning* + misconception diagnosis (naming the trap turns a miss into the lesson); *elaborated, immediate feedback* (per-choice why-wrong at the moment of error); *desirable difficulties* (commit-before-reveal, interleaving, blind review — Bjork); *metacognitive calibration* (confidence vs. correctness).
 - **Gaps / risks:** confidence/prephrase capture needs somewhere to live — session-local for v1 (calibration), `Card.custom_data` if it must persist (no schema change); "highlight the conclusion" needs a new item field before it can be auto-checked.
 - **Ref:** [`spec-ui.md`](./spec-ui.md), `tools/speedrun/deck/sample_items.json` (`TrapChoiceA–E`), spec-engine §5.1/§6, D-SR14/D1; brainlift K.1 (prephrasing) / D5 (trap signals).
+
+### D-SR35 — Session model & review flow (drills / mixed / timed / blind review)
+
+- **Status:** resolved (sizes are tunable dev defaults)
+- **Decided:** 2026-06-30 by owner + Opus (extends D-SR33)
+- **Chose:** Studying happens in bounded **sessions**, not an open due-queue. Four modes:
+  - **Targeted drill** (~10 items) — all items drawn for the single recommended skill (weakest high-frequency, the dashboard's next-best-thing); untimed; full prephrase + name-the-trap.
+  - **Mixed set** (~10) — interleaved across due skills (`ReviewCardOrder::InterleavedSkills`, D-SR6); untimed.
+  - **Timed section** (~25 + a clock) — fast MC only; no prephrase/chips; error diagnosis deferred to the result screen (simulates the real test).
+  - **Blind review** — re-runs the session's **misses / flagged items untimed**, forcing a fresh commit before the key.
+  A session is a **framed batch pulled from the due-skill queue + fresh-item draws** (WP-3/WP-4); every item is answered via the normal `AnswerCard` path. The **result screen** shows session accuracy, a "where you slipped" list (the trap per miss, from `TrapChoiceX`), flag-to-revisit, and blind-review as the recommended next step.
+- **Considered:** Anki's infinite due-queue (rejected — it *is* the deck feel we're removing); fixed full-section-only (too rigid for daily practice).
+- **Gaps / risks:** session sizes/mode thresholds are judgment calls (relate B022 pacing); session misses are tracked **session-local**; flagged items persist via `Card.custom_data` only if needed (no schema change). Session accuracy is **display-only** — Memory/Performance/Readiness still come from the engine (revlog + `SpeedrunDashboard`), never from this screen.
+- **Ref:** [`spec-ui.md`](./spec-ui.md) §3.3, spec-engine §5.2/§5.3, D-SR6/D-SR9/D-SR33; relates B022.
 
 ---
 

@@ -90,8 +90,10 @@ The anti-deck-list. Shows **where you stand** (the three scores, honestly gated)
 ### 3.2 Drill — the LR item (the heart; replaces the reviewer)
 States, in order. See the mockup: [`./assets/lr-drill-mockup.png`](./assets/lr-drill-mockup.png).
 
-1. **Prephrase** (mode-driven; untimed drills, faded as mastery rises)
-   > *"In a sentence, what must the right answer do?"* — text field + "Skip". Self-scored later.
+1. **Prephrase** (mode-driven; untimed drills, faded as mastery rises) — mockup:
+   [`./assets/lr-prephrase-mockup.png`](./assets/lr-prephrase-mockup.png)
+   > *"In one line, what must the right answer do?"* — text field + "Skip"; the 5 choices stay
+   > **hidden until you predict** (generation before recognition). Self-scored on reveal.
 2. **Choices / commit** — the argument (conclusion underlined) + stem + 5 clean rows; select →
    **Lock in**. No colors before commit.
 3. **Reveal** — correct row → green; your pick if wrong → clay; each row expands to why-wrong;
@@ -105,9 +107,12 @@ States, in order. See the mockup: [`./assets/lr-drill-mockup.png`](./assets/lr-d
 moves to the end-of-set review.
 
 ### 3.3 Set result + blind review
-End of a session: `7/10`, the skills/traps you missed, then a **review pass** over the items
-(why-wrong + trap, flag-to-revisit). A **blind-review** mode re-runs missed items untimed with
-full articulation before showing the key.
+Mockup: [`./assets/lr-set-result-mockup.png`](./assets/lr-set-result-mockup.png).
+End of a session: `7/10`, a **"Where you slipped"** list naming the **trap you fell for** on each
+miss (from `TrapChoiceX`), an all-items strip with **flag-to-revisit** stars, and the emphasized
+next step **"Blind review your misses"** — which re-runs missed items **untimed**, forcing a fresh
+commit *before* the key is shown. Session accuracy is a per-session display; Performance still
+derives from the revlog (spec-measurement §4.2), not from this screen.
 
 ### 3.4 RC passage workspace (phase-2, designed now so we don't box ourselves in)
 For RC the drawn "item" is a **passage + question set**: reading pane (highlight/annotate) beside
