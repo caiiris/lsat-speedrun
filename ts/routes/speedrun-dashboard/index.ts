@@ -20,7 +20,8 @@ import SpeedrunDashboard from "./SpeedrunDashboard.svelte";
  * @returns       The mounted Svelte component.
  */
 export async function setupSpeedrunDashboard(deckId: number): Promise<SpeedrunDashboard> {
-    const data: SpeedrunDashboardResponse = await speedrunDashboard({ deckId });
+    // deck_id is int64 → the generated client expects a bigint (see +page.ts).
+    const data: SpeedrunDashboardResponse = await speedrunDashboard({ deckId: BigInt(deckId) });
 
     return new SpeedrunDashboard({
         target: document.body,

@@ -19,7 +19,7 @@
 |---|---|
 | open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
-| fixed / done | B008, B009, B010, B021, B031 |
+| fixed / done | B008, B009, B010, B021, B031, B034 |
 
 ---
 
@@ -343,6 +343,15 @@
 - **Links:** D-SR34; spec-ui §3.2; relates D-SR13 (taxonomy)/B013 (item data model).
 
 Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6 `qt/tests/test_speedrun.py` asserted the old markup, so **8 tests were stale after merge** — updated by the orchestrator to the new intended behavior (verdict "You chose X", humanized "Trap category", accordion why-wrong, generic "Next question"). Suite green again (35/35). Not a bug — flagged so the history is clear.
+
+### B034 — Speedrun Home renders blank: deck_id passed as number, not bigint
+
+- **Type:** bug · **Status:** fixed · **Severity:** high
+- **Discovered:** 2026-07-01 by owner (opened Tools→Speedrun Home → blank) + Opus root-cause
+- **Ref:** `ts/routes/speedrun-dashboard/[...deckId]/+page.ts` (+ `index.ts`); the `SpeedrunDashboard` RPC (`deck_id` int64)
+- **Context:** the page loader did `parseInt(params.deckId)` → a JS **number**, but `deck_id` is `int64` so the generated client expects a **`bigint`**; passing a number throws at request-build time, so the `load()` fails and the page renders **blank**. Never hit before because WP-14/WP-20 were verified by build+unit tests, not the GUI. (This is the "bigint/number mismatch" svelte-check had flagged.)
+- **Resolution (2026-07-01):** convert to `BigInt(...)` in `+page.ts` and `index.ts`; `just build` green. WP-24's Home redesign inherits the fixed loader.
+- **Links:** WP-14/WP-20; D-SR32; feeds WP-24 (Home redesign).
 
 ---
 
