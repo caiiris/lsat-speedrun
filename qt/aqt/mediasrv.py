@@ -422,6 +422,8 @@ def is_sveltekit_page(path: str) -> bool:
         "import-csv",
         "import-page",
         "image-occlusion",
+        # Speedrun WP-20: Home study-plan surface
+        "speedrun-dashboard",
     ]
 
 

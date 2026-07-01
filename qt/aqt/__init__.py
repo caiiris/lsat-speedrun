@@ -112,6 +112,7 @@ import aqt.forms
 
 from aqt import addcards, addons, browser, editcurrent, filtered_deck  # isort:skip
 from aqt import stats, about, preferences, mediasync  # isort:skip
+from aqt import speedrun_home  # isort:skip  # Speedrun WP-20
 
 
 class DialogManager:
@@ -123,6 +124,7 @@ class DialogManager:
         "FilteredDeckConfigDialog": [filtered_deck.FilteredDeckConfigDialog, None],
         "DeckStats": [stats.DeckStats, None],
         "NewDeckStats": [stats.NewDeckStats, None],
+        "SpeedrunHome": [speedrun_home.SpeedrunHomeDialog, None],  # WP-20
         "About": [about.show, None],
         "Preferences": [preferences.Preferences, None],
         "sync_log": [mediasync.MediaSyncDialog, None],
