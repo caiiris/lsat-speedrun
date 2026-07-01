@@ -29,6 +29,7 @@
 | Build · wave 2 (engine) | D-SR27, D-SR28 | skill-identity resolution, mastery threshold |
 | Build · wave 3 (measure/reviewer) | D-SR29, D-SR30 | Memory band + exposure, drawn-item render mechanism |
 | Build · wave 4 (dashboard) | D-SR31, D-SR32 | revlog ease→outcome mapping, Readiness band/confidence/coverage method |
+| Product · UX reframe | D-SR33, D-SR34 | presentation reframe (study-plan, not a deck), LR drill interaction model |
 
 ---
 
@@ -334,6 +335,38 @@
 - **Considered:** three separate RPCs (more round-trips); coverage counting `skill::`/`trap::` (diverges from the weighted LR taxonomy, D-SR12); coverage-gap coefficient 1.0 (max-conservative) — chose 0.5 as the intermediate.
 - **Gaps / risks:** the band coefficient and confidence thresholds are informed judgment calls, not calibrated — revisit with WP-17 ablation / real data. Coverage uses "≥5 attempts" rather than spec §5's "pool ≥ min size AND ≥ min attempts"; acceptable for v1.
 - **Ref:** `rslib/src/stats/performance.rs`, `proto/anki/stats.proto` (`SpeedrunDashboard`), `docs/speedrun/data/weights.json`, spec-measurement §4.3/§5/§8, D-SR9/D-SR10/D-SR18/D-SR19; inbox WP-14 L2/L4/L5/L6/L8.
+
+---
+
+> **Product · UX reframe (D-SR33–D-SR34)** — decided 2026-06-30 with the owner after
+> reviewing the running demo; the Anki reviewer/deck surface reads as "flashcards," which is
+> the wrong mental model for a reasoning exam. **Presentation layer only — the engine
+> (FSRS skill scheduling, `draw_item_for_skill`, revlog→Performance, the gate, sync, mobile)
+> is unchanged.** Full design captured in [`spec-ui.md`](./spec-ui.md).
+
+### D-SR33 — Product surface is a study-plan + practice-session app, not a deck of flashcards — **Overrides PRD/spec reviewer-and-deck framing**
+
+- **Status:** resolved (design); build reshapes WP-6/WP-14, adds a `ts/` session layer
+- **Decided:** 2026-06-30 by owner + Opus (demo-driven)
+- **Chose:** Reframe the whole user-facing surface away from Anki's deck browser / due-queue / "cards": the **home is a study-plan dashboard** (the three scores + the single "next best thing"), and studying happens in **sessions** — *Targeted drill* (weakest high-frequency skill), *Mixed set* (interleaved), *Timed section*, and *Blind review* — each a **start → work → score → review** arc, ending on a set-level result + review screen. Anki chrome (deck list, due counts, "Show Answer", the 4 colored ease buttons, heatmaps) is hidden; language is LSAT-native ("items, drills, sections, review", not "cards, decks, reviews"). **This is a presentation/session layer only — every graded signal still flows through the existing engine** (a session = a batch of due skill cards; the drawn item + commit-then-reveal + `AnswerCard` are unchanged). RC (phase-2) gets a **passage workspace** layout under the same draw model, so the presentation does not paint us into a corner.
+- **Considered:** keeping the stock Anki reviewer/deck UI (fastest, but the flashcard framing misrepresents reasoning practice and tanks the product); rethinking the scheduling model or the Anki foundation itself (rejected — that would discard the graded brownfield-engine thesis and the week's work; owner scoped this to *UI only*).
+- **Grounding:** self-regulated learning (goal + progress + a single next action reduces avoidance and choice overload); deliberate practice (drive practice to the edge of competence via the weakest-skill recommendation); the app already computes "next best thing" (D-SR9/WP-14).
+- **Gaps / risks:** reshapes WP-6 (reviewer → session/drill surface) and WP-14 (dashboard → home) and adds session state/timer/results screens in `ts/` — all additive, no Rust/schema change. Does **not** address the FSRS-as-skill pedagogy question (B003), which is intentionally kept.
+- **Overrides:** PRD (Anki-reviewer/deck framing) + spec-engine §6/§8 presentation assumptions (see `AGENTS.md` → "Overrides since the plan").
+- **Ref:** [`spec-ui.md`](./spec-ui.md), spec-engine §6/§8, D-SR3/D-SR6/D-SR9; supersedes the implied stock-Anki UI.
+
+### D-SR34 — LR drill interaction: commit-then-reveal + prephrase + name-the-trap, with the MC commit as the deterministic scoring backbone
+
+- **Status:** resolved
+- **Decided:** 2026-06-30 by owner + Opus
+- **Chose:** Enrich the drill interaction beyond "pick 1 of 5, reveal" (recognition-only) with two learning layers, while keeping scoring deterministic and **AI-free**:
+  1. **Generation — prephrase.** Before the choices (some of the time; scaffolded early, faded as Performance rises), the learner predicts what the answer must do. v1 is **self-scored** on reveal ("did your prediction match?"); optional AI feedback on the free text is deferred until AI is available (**Wednesday night** per the current constraint) and, when added, must obey the honesty contract (AI never owns correctness — D-SR14/D1).
+  2. **Error diagnosis — name-the-trap.** On a wrong commit, the learner classifies *why* their choice was wrong by picking the trap; this is **deterministically checked against the item's per-choice `TrapChoiceA–E` tags** (already in the data model — no AI, no new data).
+  Plus an optional **confidence** tap (calibration signal) and an untimed **blind-review** mode. The **multiple-choice commit remains the sole deterministic graded signal** that drives the FSRS rating + Performance (spec §5.1). Interaction intensity is **mode-driven**: timed sections = fast MC only; untimed drills = full prephrase + eliminate/diagnose; wrong answers trigger the trap step.
+- **Considered:** free-text answers as the graded signal (can't grade deterministically without AI → violates D1 / no-AI-pre-Wed); MC-only (recognition, weak for reasoning); highlight-the-conclusion input (needs a new marked-conclusion item field — deferred, tracked separately).
+- **Grounding (learning science):** the *generation effect* / prephrasing (produce before recognizing); *error-driven learning* + misconception diagnosis (naming the trap turns a miss into the lesson); *elaborated, immediate feedback* (per-choice why-wrong at the moment of error); *desirable difficulties* (commit-before-reveal, interleaving, blind review — Bjork); *metacognitive calibration* (confidence vs. correctness).
+- **Gaps / risks:** confidence/prephrase capture needs somewhere to live — session-local for v1 (calibration), `Card.custom_data` if it must persist (no schema change); "highlight the conclusion" needs a new item field before it can be auto-checked.
+- **Ref:** [`spec-ui.md`](./spec-ui.md), `tools/speedrun/deck/sample_items.json` (`TrapChoiceA–E`), spec-engine §5.1/§6, D-SR14/D1; brainlift K.1 (prephrasing) / D5 (trap signals).
 
 ---
 

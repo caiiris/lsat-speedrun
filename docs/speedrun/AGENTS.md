@@ -39,6 +39,7 @@
 ## Overrides since the plan
 
 _Newest first._
+- **PRD + spec-engine §6/§8** stock-Anki reviewer/deck framing → the product is reframed as an **LSAT study-plan + practice-session app** (home = dashboard/study-plan; drills/timed-sections/blind-review, not a due queue; no deck/card/ease chrome). Presentation layer only — engine unchanged. See [`spec-ui.md`](./spec-ui.md) (D-SR33). Drill interaction adds prephrase + name-the-trap, MC commit stays the deterministic graded signal (D-SR34).
 - **spec-engine §8** drawn-item render → v1 uses **Python field injection (`web.eval`)** on desktop instead of the `RenderUncommittedCard` RPC named in §8; render/answer stay decoupled (D-SR30; revisit for AnkiDroid → B029).
 - **spec-measurement §4.3** readiness formula → corrected to **drop the double `w_S`**: `expected_raw = N_lr · Σ w_S·Perf(S)` (D-SR18, **resolved** — math verified).
 - **spec-measurement §4.3** Readiness output in v1 is an explicit **"LR-only estimate"** with a wider band (D-SR19, refines D-SR12).
@@ -57,9 +58,10 @@ _Newest first._
 | Path | What |
 |---|---|
 | [`prd-speedrun.md`](./prd-speedrun.md) | User-facing contract: the 3 scores, honesty/give-up rules, ACs, edge-cases |
-| [`decisions.md`](./decisions.md) | Decision log D-SR1…32 (append-only; **next free ID: D-SR33**) |
+| [`decisions.md`](./decisions.md) | Decision log D-SR1…34 (append-only; **next free ID: D-SR35**) |
 | [`spec-engine.md`](./spec-engine.md) | The Rust change: skill-as-card interleaving + fresh-item draw, mastery query, data model |
 | [`spec-measurement.md`](./spec-measurement.md) | Memory/Performance/Readiness models, the give-up gate, evals |
+| [`spec-ui.md`](./spec-ui.md) | **Presentation/UX (living):** study-plan surface + the LR drill interaction (reframe away from Anki decks/flashcards) — D-SR33/34 |
 | [`spec-sync-mobile.md`](./spec-sync-mobile.md) | Self-hosted sync, conflict rule, AnkiDroid companion |
 | [`spec-ai.md`](./spec-ai.md) | AI honesty contract, anchor tagging eval, card-check, injection guard |
 | [`build-plan.md`](./build-plan.md) | Dispatcher output: work packages WP-0…WP-19, phases, deps, parallel lanes |
@@ -71,7 +73,7 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 
 ## Conventions that bite
 
-- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR33**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B033**).
+- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR35**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B033**).
 - **Frozen docs:** the PRD + specs are one-and-done. Don't edit them to track drift — record changes as a **new decision** + an **Overrides** line here.
 - **Engine invariants** (don't break these — they're the project's whole thesis + grade):
   - **Zero schema change.** Ride existing tables + `Card.custom_data`/tags; no schema-version bump (keeps sync/downgrade/`dbcheck` safe and upstream rebases cheap). [D-SR4]
@@ -88,11 +90,18 @@ dashboard** are all merged to `main`; combined `just build` + `just test-rust` +
 `just test-ts` are green. **The desktop app runs the full interleaved commit-then-reveal loop and
 shows the scored dashboard** (Memory / Performance / Readiness-or-Abstain) — a demo seed deck is in
 the local profile (`User 1`; synthetic + thin coverage, so Readiness will honestly abstain).
-**Next:** **WP-0b (AnkiDroid build)** — the remaining #1 risk, needs the dev's machine
-([B001](./backlog.md)) — plus **WP-10 (sync)**, the **Friday AI wiring** (WP-13; WP-11/12 exist as
-offline tools), and the proof lane (WP-16 evals / WP-17 ablation / WP-18 bench). **Verify on device:**
-WP-6 Level-2 needs a live-GUI pass. Deadlines: **Wed** core (no AI) · **Fri** AI + sync · **Sun**
-prove + ship. *(`main` is ahead of `origin/main` by local merges — push when ready.)*
+**Active direction — UX reframe (D-SR33/D-SR34, [`spec-ui.md`](./spec-ui.md)):** the Anki
+deck/flashcard surface reads wrong for a reasoning exam, so we are reframing the presentation into
+an **LSAT study-plan + practice-session app** (home = dashboard/study-plan; drills / timed sections /
+blind review; drill interaction adds **prephrase** + **name-the-trap**, MC commit stays the
+deterministic graded signal). **Presentation layer only — engine untouched.** This **reshapes WP-6
+(reviewer → drill/session surface) and WP-14 (dashboard → home)** and adds a small `ts/` session
+layer; all additive. Design mockups in `docs/speedrun/assets/`.
+
+**Also next:** **WP-0b (AnkiDroid build)** — #1 risk, dev's machine ([B001](./backlog.md)) —
+**WP-10 (sync)**, AI wiring (WP-13; AI available **Wed night** per current constraint), proof lane
+(WP-16/17/18). **Verify on device:** WP-6 Level-2 live-GUI pass. Deadlines: **Wed** core · **Fri**
+AI + sync · **Sun** prove + ship. *(`main` is ahead of `origin/main` by local merges — push when ready.)*
 
 **Resolved this round:** **WP-14 landed** → promoted **D-SR31** (revlog ease→outcome mapping,
 resolves the ease half of B014) + **D-SR32** (Readiness band/confidence/coverage method + combined
