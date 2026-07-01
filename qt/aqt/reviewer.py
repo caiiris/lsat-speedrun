@@ -48,6 +48,18 @@ from aqt.operations.tag import add_tags_to_notes, remove_tags_from_notes
 from aqt.profiles import VideoDriver
 from aqt.qt import *
 from aqt.sound import av_player, play_clicked_audio, record_audio
+
+# Speedrun WP-6 — commit-then-reveal reviewer extension (additive, gated on notetype)
+from aqt.speedrun import (
+    LSAT_ITEM_NOTETYPE,
+    bottom_commit_prompt,
+    bottom_continue_button,
+    build_item_answer_html,
+    build_item_question_html,
+    get_item_fields,
+    rating_for_committed,
+    speedrun_card_type,
+)
 from aqt.theme import theme_manager
 from aqt.toolbar import BottomBar
 from aqt.utils import (
@@ -170,6 +182,10 @@ class Reviewer:
         self._show_answer_timer: QTimer | None = None
         self.auto_advance_enabled = False
         gui_hooks.av_player_did_end_playing.append(self._on_av_player_did_end_playing)
+        # Speedrun WP-6 state — reset on each new card
+        self._sr_committed: str | None = None          # choice the learner clicked (A-E)
+        self._sr_item_fields: dict[str, str] | None = None  # drawn item fields (Level 2)
+        self._sr_card_kind: str | None = None          # 'item' | 'skill' | None
 
     def show(self) -> None:
         if self.mw.col.sched_ver() == 1 or not self.mw.col.v3_scheduler():
@@ -248,6 +264,10 @@ class Reviewer:
         self.previous_card = self.card
         self.card = None
         self._v3 = None
+        # Reset Speedrun per-card state
+        self._sr_committed = None
+        self._sr_item_fields = None
+        self._sr_card_kind = None
         self._get_next_v3_card()
 
         self._previous_card_info.set_card(self.previous_card)
@@ -260,7 +280,59 @@ class Reviewer:
         if self._reps is None:
             self._initWeb()
 
+        # Speedrun WP-6: detect notetype and pre-load Level-2 drawn item if needed
+        self._sr_card_kind = speedrun_card_type(self.card.note_type())
+        if self._sr_card_kind == "skill":
+            self._sr_item_fields = self._speedrun_draw_item_fields()
+            if self._sr_item_fields is None:
+                # Pool empty or error: fall back to normal skill-card template rendering
+                self._sr_card_kind = None
+
         self._showQuestion()
+
+    # Speedrun WP-6 helpers
+    ##########################################################################
+
+    def _speedrun_draw_item_fields(self) -> dict[str, str] | None:
+        """Level 2: call draw_item_for_skill and return the drawn item's fields.
+
+        Returns None on any error (empty pool, no tag, backend failure) so the
+        caller can gracefully fall back to normal rendering.
+        """
+        from anki.notes import NoteId
+
+        assert self.card is not None
+        sched = self.mw.col.sched
+        # draw_item_for_skill is only available on the V3 scheduler.
+        if not isinstance(sched, V3Scheduler):
+            return None
+        try:
+            item_note_id: int = sched.draw_item_for_skill(self.card.id)
+            if not item_note_id:
+                return None
+            item_note = self.mw.col.get_note(NoteId(item_note_id))
+            if item_note.note_type()["name"] != LSAT_ITEM_NOTETYPE:
+                return None
+            return get_item_fields(item_note)
+        except Exception as exc:
+            print(f"[Speedrun] draw_item_for_skill failed: {exc}")
+            return None
+
+    def _speedrun_item_fields_for_display(self) -> dict[str, str] | None:
+        """Return item fields for rendering.
+
+        Level 1: read from the current card's own note (LSAT Item).
+        Level 2: return the pre-drawn fields stored on _sr_item_fields.
+        Normal cards: return None (caller should skip Speedrun path).
+        """
+        if self._sr_card_kind == "item":
+            try:
+                return get_item_fields(self.card.note())
+            except Exception:
+                return None
+        if self._sr_card_kind == "skill":
+            return self._sr_item_fields
+        return None
 
     def _get_next_v3_card(self) -> None:
         assert isinstance(self.mw.col.sched, V3Scheduler)
@@ -374,9 +446,28 @@ class Reviewer:
         self.state = "question"
         self.typedAnswer: str | None = None
         c = self.card
-        # grab the question and play audio
+
+        # --- Speedrun WP-6: commit-then-reveal question rendering ---
+        sr_fields = self._speedrun_item_fields_for_display()
+        if sr_fields is not None:
+            q = build_item_question_html(sr_fields)
+            # Placeholder answer (never shown until after commit)
+            a = "<div id='sr-answer-placeholder'></div>"
+            self._run_state_mutation_hook()
+            bodyclass = theme_manager.body_classes_for_card_ord(c.ord)
+            self.web.eval(
+                f"_showQuestion({json.dumps(q)}, {json.dumps(a)}, '{bodyclass}');"
+            )
+            self._update_flag_icon()
+            self._update_mark_icon()
+            self._showAnswerButton()  # overridden below for Speedrun
+            self.mw.web.setFocus()
+            gui_hooks.reviewer_did_show_question(c)
+            return
+        # --- end Speedrun path ---
+
+        # Normal Anki question path (unchanged)
         q = c.question()
-        # play audio?
         if c.autoplay():
             self.web.setPlaybackRequiresGesture(False)
             sounds = c.question_av_tags()
@@ -387,7 +478,6 @@ class Reviewer:
             gui_hooks.reviewer_will_play_question_sounds(c, sounds)
         gui_hooks.av_player_will_play_tags(sounds, self.state, self)
         av_player.play_tags(sounds)
-        # render & update bottom
         q = self._mungeQA(q)
         q = gui_hooks.card_will_show(q, c, "reviewQuestion")
         self._run_state_mutation_hook()
@@ -402,7 +492,6 @@ class Reviewer:
         self._update_mark_icon()
         self._showAnswerButton()
         self.mw.web.setFocus()
-        # user hook
         gui_hooks.reviewer_did_show_question(c)
         self._auto_advance_to_answer_if_enabled()
 
@@ -465,8 +554,20 @@ class Reviewer:
             return
         self.state = "answer"
         c = self.card
+
+        # --- Speedrun WP-6: commit-then-reveal answer rendering ---
+        sr_fields = self._speedrun_item_fields_for_display()
+        if sr_fields is not None and self._sr_committed:
+            a = build_item_answer_html(sr_fields, self._sr_committed)
+            self.web.eval(f"_showAnswer({json.dumps(a)});")
+            self._showEaseButtons()  # overridden below for Speedrun
+            self.mw.web.setFocus()
+            gui_hooks.reviewer_did_show_answer(c)
+            return
+        # --- end Speedrun path ---
+
+        # Normal Anki answer path (unchanged)
         a = c.answer()
-        # play audio?
         if c.autoplay():
             sounds = c.answer_av_tags()
             gui_hooks.reviewer_will_play_answer_sounds(c, sounds)
@@ -657,6 +758,13 @@ class Reviewer:
         gui_hooks.audio_did_seek_relative(self.web, self.seek_secs)
 
     def onEnterKey(self) -> None:
+        # Speedrun WP-6: in the commit phase, Space/Enter submits "speedrun:continue"
+        # if a choice has already been committed; otherwise do nothing (the learner
+        # must click a choice — no keyboard shortcut for commit yet).
+        if self._sr_card_kind is not None:
+            if self.state == "answer" and self._sr_committed:
+                self._linkHandler("speedrun:continue")
+            return
         if self.state == "question":
             self._getTypedAnswer()
         elif self.state == "answer" and aqt.mw.pm.spacebar_rates_card():
@@ -673,6 +781,24 @@ class Reviewer:
             self._answerCard(self._defaultEase())
 
     def _linkHandler(self, url: str) -> None:
+        # --- Speedrun WP-6 commit/continue handlers ---
+        if url.startswith("speedrun:commit:") and self._sr_card_kind is not None:
+            choice = url[len("speedrun:commit:"):].strip().upper()
+            if choice in ("A", "B", "C", "D", "E") and self.state == "question":
+                self._sr_committed = choice
+                self._showAnswer()
+            return
+        if url == "speedrun:continue" and self._sr_card_kind is not None:
+            if self.state == "answer" and self._sr_committed:
+                sr_fields = self._speedrun_item_fields_for_display()
+                if sr_fields is not None:
+                    ease: Literal[1, 2, 3, 4] = rating_for_committed(
+                        self._sr_committed, sr_fields
+                    )  # type: ignore[assignment]
+                    self._answerCard(ease)
+            return
+        # --- end Speedrun handlers ---
+
         if url == "ans":
             self._getTypedAnswer()
         elif url.startswith("ease"):
@@ -841,6 +967,12 @@ timerStopped = false;
         )
 
     def _showAnswerButton(self) -> None:
+        # Speedrun WP-6: replace the 'Show Answer' button with a commit prompt
+        if self._sr_card_kind is not None:
+            middle = bottom_commit_prompt(self._remaining())
+            self.bottom.web.eval("showQuestion(%s,%d);" % (json.dumps(middle), 0))
+            return
+
         middle = """
 <button title="{}" id="ansbut" onclick='pycmd("ans");'>{}<span class=stattxt>{}</span></button>""".format(
             tr.actions_shortcut_key(val=tr.studying_space()),
@@ -859,6 +991,17 @@ timerStopped = false;
         self.bottom.web.eval("showQuestion(%s,%d);" % (json.dumps(middle), maxTime))
 
     def _showEaseButtons(self) -> None:
+        # Speedrun WP-6: show a single 'Continue' button instead of 4 ease buttons
+        if self._sr_card_kind is not None and self._sr_committed:
+            sr_fields = self._speedrun_item_fields_for_display()
+            if sr_fields is not None:
+                ease = rating_for_committed(self._sr_committed, sr_fields)
+                middle = bottom_continue_button(ease)
+                self.bottom.web.eval(
+                    f"showAnswer({json.dumps(middle)}, false);"
+                )
+                return
+
         if not self._states_mutated:
             self.mw.progress.single_shot(50, self._showEaseButtons)
             return
