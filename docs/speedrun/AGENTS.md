@@ -58,7 +58,7 @@ _Newest first._
 | Path | What |
 |---|---|
 | [`prd-speedrun.md`](./prd-speedrun.md) | User-facing contract: the 3 scores, honesty/give-up rules, ACs, edge-cases |
-| [`decisions.md`](./decisions.md) | Decision log D-SR1…36 (append-only; **next free ID: D-SR37**) |
+| [`decisions.md`](./decisions.md) | Decision log D-SR1…37 (append-only; **next free ID: D-SR38**) |
 | [`spec-engine.md`](./spec-engine.md) | The Rust change: skill-as-card interleaving + fresh-item draw, mastery query, data model |
 | [`spec-measurement.md`](./spec-measurement.md) | Memory/Performance/Readiness models, the give-up gate, evals |
 | [`spec-ui.md`](./spec-ui.md) | **Presentation/UX (living):** study-plan surface + the LR drill interaction (reframe away from Anki decks/flashcards) — D-SR33/34 |
@@ -73,7 +73,7 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 
 ## Conventions that bite
 
-- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR37**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B040**).
+- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR38**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B040**).
 - **Frozen docs:** the PRD + specs are one-and-done. Don't edit them to track drift — record changes as a **new decision** + an **Overrides** line here.
 - **Engine invariants** (don't break these — they're the project's whole thesis + grade):
   - **Zero schema change.** Ride existing tables + `Card.custom_data`/tags; no schema-version bump (keeps sync/downgrade/`dbcheck` safe and upstream rebases cheap). [D-SR4]

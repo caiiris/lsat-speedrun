@@ -29,7 +29,7 @@
 | Build · wave 2 (engine) | D-SR27, D-SR28 | skill-identity resolution, mastery threshold |
 | Build · wave 3 (measure/reviewer) | D-SR29, D-SR30 | Memory band + exposure, drawn-item render mechanism |
 | Build · wave 4 (dashboard) | D-SR31, D-SR32 | revlog ease→outcome mapping, Readiness band/confidence/coverage method |
-| Product · UX reframe | D-SR33, D-SR34, D-SR35, D-SR36 | presentation reframe, LR drill interaction, session/review flow, full-window shell |
+| Product · UX reframe | D-SR33, D-SR34, D-SR35, D-SR36, D-SR37 | presentation reframe, LR drill interaction, session/review flow, full-window shell, Home-as-hub |
 
 ---
 
@@ -390,6 +390,15 @@
 - **Considered:** the opt-in menu + extended reviewer (WP-20/21 as first built — too timid; still feels like Anki); a separate standalone app embedding the Rust engine (too heavy for the week, loses the fork thesis).
 - **Gaps / risks:** touches Anki's **main-window state machine + toolbar** — the riskiest presentation change so far; must keep Browse/Sync/Add reachable; must not break normal Anki when the shell is off; verify on a real GUI (headless can't).
 - **Ref:** [`spec-ui.md`](./spec-ui.md), D-SR33; build = WP-24.
+
+### D-SR37 — Speedrun Home is the self-sufficient hub; the Anki deck browser is never a user surface (refines D-SR36)
+
+- **Status:** resolved (direction) — build = WP-25
+- **Decided:** 2026-07-01 by owner ("I don't want to drop into the full Anki deck browser; I want any functionality Anki had to be accessible from Speedrun Home")
+- **Chose:** All Anki functionality (**Sync, Browse, Add, Stats, Import/Export, Deck options, Preferences**) is surfaced **inside the Speedrun Home** via a top bar / "More" menu, wired through the Home's pycmd bridge to the existing `mw.*` actions (they open standard Anki dialogs on top of the Home, then return to it). The raw Anki **deck browser is not a surface the user uses or falls back to** — it stays hidden/covered behind the maximized Home. This **supersedes the intermediate "close Home → full Anki" idea** (functionality was reachable but via the deck browser, which the owner rejected).
+- **Considered:** (a) close-Home-to-reach-Anki (rejected — drops into the deck browser); (b) keeping the Anki toolbar visible under the shell (rejected — same). Chose surfacing functions in the Home instead.
+- **Gaps / risks:** every Anki action that should be reachable must be explicitly wired into the Home bridge (an un-surfaced action becomes inaccessible while in the shell); `SPEEDRUN_SHELL=False` remains the escape hatch to stock Anki. Non-destructive: Anki dialogs/engine unchanged.
+- **Ref:** `qt/aqt/speedrun_home.py` (bridge), `ts/routes/speedrun-dashboard/SpeedrunDashboard.svelte` (top bar), `qt/aqt/main.py` (`SPEEDRUN_SHELL`), spec-ui §2; refines D-SR36; build = WP-25.
 
 ---
 
