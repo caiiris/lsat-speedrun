@@ -85,7 +85,7 @@ class SpeedrunHomeDialog(QDialog):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        self.web = AnkiWebView(kind=AnkiWebViewKind.MAIN)
+        self.web = AnkiWebView(kind=AnkiWebViewKind.SPEEDRUN_HOME)
         layout.addWidget(self.web)
         self.web.set_bridge_command(self._on_bridge_cmd, self)
 

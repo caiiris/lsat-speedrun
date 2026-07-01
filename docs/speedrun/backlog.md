@@ -19,7 +19,7 @@
 |---|---|
 | open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
-| fixed / done | B008, B009, B010, B021, B031, B034, B035 |
+| fixed / done | B008, B009, B010, B021, B031, B034, B035, B037 |
 
 ---
 
@@ -370,6 +370,15 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 - **Context:** (1) the **targeted-drill skill filter** matches the exact `IdentityTag` and falls back to *all* skill cards if none match — sub-skill/variant items can be missed; (2) the session **pre-fetches a card-id queue**, so V3-scheduler states can mismatch for non-new cards (safe for the all-new seed deck; skips the FSRS update rather than crashing). Both are graceful-degradation v1 limits.
 - **Resolution:** tighten the skill filter (use the pool query from WP-3 / `tag:skill::S`) and re-fetch scheduler state per item before answering, once past the seed-deck demo.
 - **Links:** WP-22; D-SR35; relates WP-3 (selection), D-SR27.
+
+### B037 — Speedrun Home RPC 403: webview kind lacked API access
+
+- **Type:** bug · **Status:** fixed · **Severity:** high
+- **Discovered:** 2026-07-01 by owner (Home showed `403 Forbidden` after clicking Speedrun Home) + Opus
+- **Ref:** `qt/aqt/webview.py` (`AnkiWebViewKind`, `have_api_access` tuple, `AuthInterceptor`); `qt/aqt/speedrun_home.py`
+- **Context:** Anki only injects the `Authorization: Bearer <apikey>` header (required by mediasrv `_have_api_access`) for webviews whose `kind` is in `have_api_access`. WP-20's Home dialog used `AnkiWebViewKind.MAIN`, which is **not** API-enabled, so the dashboard RPC POST was rejected with 403.
+- **Resolution (2026-07-01):** added `AnkiWebViewKind.SPEEDRUN_HOME`, included it in the `have_api_access` set, and switched `speedrun_home.py` to that kind. **Lesson:** any Anki webview that calls backend RPCs must use an API-enabled kind.
+- **Links:** B034/B035 (same chain — WP-20 Home never worked over the web until GUI-tested); WP-14/WP-20; feeds WP-24.
 
 ---
 
