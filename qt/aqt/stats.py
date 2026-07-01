@@ -138,7 +138,11 @@ class NewDeckStats(QDialog):
         return False
 
     def refresh(self) -> None:
-        self.form.web.load_sveltekit_page("graphs")
+        # Speedrun WP-27: append ?sr=1 so the SvelteKit page activates the
+        # Speedrun design language (body.speedrun-stats CSS gate).  Stock Anki
+        # (SPEEDRUN_SHELL=False) sees no param and keeps the default theme.
+        path = "graphs?sr=1" if aqt.main.SPEEDRUN_SHELL else "graphs"
+        self.form.web.load_sveltekit_page(path)
 
 
 class DeckStats(QDialog):
