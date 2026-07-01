@@ -72,4 +72,23 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
     :global(.night-mode) .help-badge {
         color: var(--fg);
     }
+
+    // Speedrun WP-27 (fix): restyle graph cards to the Speedrun design language.
+    // Scoped to this component but gated on the global body.speedrun-stats class
+    // (set only by the Speedrun stats page), so stock Anki + other pages are
+    // unaffected. Uses :global() for the ancestor and keeps .container/h1 scoped.
+    :global(body.speedrun-stats) .container {
+        background: #ffffff;
+        border: 1px solid #dde2e9;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(27, 36, 48, 0.07);
+    }
+    :global(body.speedrun-stats) h1 {
+        color: #3e3a8c;
+        font-family: -apple-system, "Inter", "Helvetica Neue", Arial, sans-serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        border-bottom-color: #eceff3;
+    }
 </style>

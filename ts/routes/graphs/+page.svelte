@@ -73,6 +73,12 @@ in graphs-base.scss.  Stock Anki (no ?sr param) is completely unchanged.
 />
 
 <style lang="scss">
+    // Speedrun WP-27 (fix): page background — set here (guaranteed to load with
+    // this route) rather than relying on graphs-base.scss.
+    :global(body.speedrun-stats) {
+        background: #f5f7fa;
+    }
+
     // Speedrun WP-27: branded header strip for the stats page.
     // Only rendered when isSpeedrun = true (SPEEDRUN_SHELL path).
     .sr-stats-header {
