@@ -54,7 +54,7 @@
 | WP-19 | Packaging (APK/TestFlight + installer + crash) | 3 | Packaging | not started |
 | WP-20 | Home study-plan surface (reshape WP-14 dashboard → home) | UX | Desktop-UI | landed ✅ (merged; Tools→Speedrun Home / Ctrl+Shift+H; session launchers stubbed → WP-22) |
 | WP-21 | Drill interaction surface (prephrase + name-the-trap; reshape WP-6) | UX | Desktop-Reviewer | landed ✅ (merged; prephrase + name-the-trap + de-Anki chrome; reasoning-map deferred B033; stale WP-6 tests fixed) |
-| WP-22 | Session layer + result/blind-review (drills/mixed/timed) | UX | Desktop-UI | next up |
+| WP-22 | Session layer + result/blind-review (drills/mixed/timed) | UX | Desktop-UI | landed ✅ (merged; `speedrun_session.py` all 4 modes + result + blind review; 24 tests; limits B036) |
 | WP-23 | RC passage workspace | UX | Desktop-UI | deferred (phase-2) |
 | WP-24 | Full-window Speedrun shell (hide Anki chrome; Home on launch) | UX | Desktop-UI | next up (D-SR36) |
 
@@ -443,7 +443,7 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
   buttons / "Show Answer"; existing normal-Anki review still unaffected (gated on notetype).
 
 ### WP-22 — Session layer + result / blind-review
-- **Lane:** Desktop-UI · **Depends on:** WP-21, WP-20, WP-4 (interleave) · **Status:** not started
+- **Lane:** Desktop-UI · **Depends on:** WP-21, WP-20, WP-4 (interleave) · **Status:** done (merged 2026-07-01; `qt/aqt/speedrun_session.py` self-contained session dialog — all 4 modes + result + blind-review; 24 tests; answers via `answer_card` op, engine intact). Note: implemented in Qt/Python (not a `ts/` route) — cleaner, no reviewer diff. Known limits → B036.
 - **Goal:** A `ts/` **session controller** (D-SR35): build a bounded session (targeted / mixed /
   timed / blind-review) from the due-skill queue + draws, run the item loop through WP-21, add a
   **timer** for timed sections, then the **set-result** screen ("where you slipped" + flag-to-revisit)

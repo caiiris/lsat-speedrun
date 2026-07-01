@@ -73,7 +73,7 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 
 ## Conventions that bite
 
-- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR37**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B036**).
+- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR37**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B037**).
 - **Frozen docs:** the PRD + specs are one-and-done. Don't edit them to track drift — record changes as a **new decision** + an **Overrides** line here.
 - **Engine invariants** (don't break these — they're the project's whole thesis + grade):
   - **Zero schema change.** Ride existing tables + `Card.custom_data`/tags; no schema-version bump (keeps sync/downgrade/`dbcheck` safe and upstream rebases cheap). [D-SR4]

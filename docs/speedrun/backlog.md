@@ -17,7 +17,7 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
 | fixed / done | B008, B009, B010, B021, B031, B034, B035 |
 
@@ -361,6 +361,15 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 - **Context:** the web frontend calls backend RPCs by POSTing `/_anki/<method>`; mediasrv only routes methods listed in `exposed_backend_list` (→ `<method>_raw` on `RustBackend`). WP-14 added the `SpeedrunDashboard` RPC + pylib wrapper but **never added `speedrun_dashboard` to `exposed_backend_list`**, so the Home's fetch 404'd. (Only surfaced now because WP-14 was verified via pylib/Rust, not an actual web call.)
 - **Resolution (2026-07-01):** added `"speedrun_dashboard"` under StatsService in `exposed_backend_list`; verified `mediasrv` imports and `speedrunDashboard` is registered. **Lesson:** any new frontend-facing backend RPC must be added here.
 - **Links:** B034 (same chain — dashboard RPC never exercised over the web); WP-14/WP-20; feeds WP-24.
+
+### B036 — Session (WP-22) known limits: approximate targeted-drill filter + V3 prefetch state
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-07-01 by WP-22 build agent (inbox L3/L4)
+- **Ref:** `qt/aqt/speedrun_session.py`
+- **Context:** (1) the **targeted-drill skill filter** matches the exact `IdentityTag` and falls back to *all* skill cards if none match — sub-skill/variant items can be missed; (2) the session **pre-fetches a card-id queue**, so V3-scheduler states can mismatch for non-new cards (safe for the all-new seed deck; skips the FSRS update rather than crashing). Both are graceful-degradation v1 limits.
+- **Resolution:** tighten the skill filter (use the pool query from WP-3 / `tag:skill::S`) and re-fetch scheduler state per item before answering, once past the seed-deck demo.
+- **Links:** WP-22; D-SR35; relates WP-3 (selection), D-SR27.
 
 ---
 
