@@ -56,7 +56,7 @@
 | WP-21 | Drill interaction surface (prephrase + name-the-trap; reshape WP-6) | UX | Desktop-Reviewer | landed ✅ (merged; prephrase + name-the-trap + de-Anki chrome; reasoning-map deferred B033; stale WP-6 tests fixed) |
 | WP-22 | Session layer + result/blind-review (drills/mixed/timed) | UX | Desktop-UI | landed ✅ (merged; `speedrun_session.py` all 4 modes + result + blind review; 24 tests; limits B036) |
 | WP-23 | RC passage workspace | UX | Desktop-UI | deferred (phase-2) |
-| WP-24 | Full-window Speedrun shell (hide Anki chrome; Home on launch) | UX | Desktop-UI | next up (D-SR36) |
+| WP-24 | Full-window Speedrun shell (hide Anki chrome; Home on launch) | UX | Desktop-UI | landed ✅ (merged; `SPEEDRUN_SHELL` flag: auto-open Home maximized + hide toolbar; needs owner GUI-verify; Sync-in-shell → B039) |
 
 ## Dependency graph
 
@@ -464,6 +464,7 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 - **Acceptance:** `just run` opens Speedrun Home as the main surface; Anki's toolbar/deck-list hidden or replaced; study flows through the drill; sync/browse still reachable; stock Anki review of non-Speedrun profiles unaffected (shell flag); build + `just test-ts`/`test-py` green; **live-GUI verified by owner**.
 - **Sequencing:** land **after WP-22** (both touch home/reviewer/main-window area) to avoid collisions.
 - **Risk:** highest presentation risk (Anki main-window state machine). [relates D-SR30/B002]
+- **Status:** done (merged 2026-07-01; `qt/aqt/main.py`, gated by `SPEEDRUN_SHELL=True`: auto-opens Home maximized ~200ms after profile load, hides the top toolbar in the deckBrowser state + restores it on transition, title→"Speedrun"). **No Home redesign needed** — WP-20's Home matched the mockup once B034/B035/B037 were fixed. **Owner must GUI-verify.** Sync/Browse only via native menu/shortcuts for now → B039. Disable via `SPEEDRUN_SHELL=False`.
 
 ---
 

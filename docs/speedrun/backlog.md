@@ -17,7 +17,7 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038, B039 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
 | fixed / done | B008, B009, B010, B021, B031, B034, B035, B037 |
 
@@ -388,6 +388,15 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 - **Context:** the profile's `LSAT Speedrun::Meta` deck has 13 Meta cards, but the Home's Memory card renders the empty state. Likely the `deck_id` passed to the dashboard doesn't include the Meta subdeck (deck-children handling), or `memory_score_impl` returns None when no reviews exist and the UI treats that as "no cards." Investigate: confirm the deck_id (parent vs subdeck) + whether Memory should show a 0-review state vs "no cards."
 - **Resolution:** confirm deck-children inclusion in the memory query; distinguish "no meta cards" from "meta cards exist but unreviewed" in the response/UI.
 - **Links:** D-SR29 (Memory), D-SR32 (dashboard RPC); WP-14/WP-20.
+
+### B039 — Speedrun shell: Sync / Browse not surfaced inside the Home (native menu/shortcut only)
+
+- **Type:** issue · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-07-01 by WP-24 build agent (inbox)
+- **Ref:** `qt/aqt/main.py` (`SPEEDRUN_SHELL`, `_speedrun_auto_open_home`), `qt/aqt/speedrun_home.py`
+- **Context:** WP-24 hides Anki's top toolbar (Decks/Add/Browse/Stats/**Sync**) and auto-opens the Home maximized. Essential functions (Sync, Browse) are then only reachable via the native macOS menu or shortcuts (`Y` sync, `B` browse) — there's no in-shell button. Fine for a demo, but a real shell needs a minimal Speedrun top bar exposing at least **Sync** and **Browse**.
+- **Resolution:** add a small Speedrun top bar (or Home buttons) for Sync + Browse; wire to `mw.onSync` / `mw.onBrowse`.
+- **Links:** D-SR36; WP-24; spec-ui §2.
 
 ---
 

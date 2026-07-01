@@ -73,7 +73,7 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 
 ## Conventions that bite
 
-- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR37**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B039**).
+- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR37**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B040**).
 - **Frozen docs:** the PRD + specs are one-and-done. Don't edit them to track drift — record changes as a **new decision** + an **Overrides** line here.
 - **Engine invariants** (don't break these — they're the project's whole thesis + grade):
   - **Zero schema change.** Ride existing tables + `Card.custom_data`/tags; no schema-version bump (keeps sync/downgrade/`dbcheck` safe and upstream rebases cheap). [D-SR4]
@@ -96,10 +96,13 @@ an **LSAT study-plan + practice-session app** (home = dashboard/study-plan; dril
 blind review; drill interaction adds **prephrase** + **name-the-trap**, MC commit stays the
 deterministic graded signal). **Presentation layer only — engine untouched.** This **reshapes WP-6
 (reviewer → drill/session surface) and WP-14 (dashboard → home)** and adds a small `ts/` session
-layer; all additive. Design mockups in `docs/speedrun/assets/`. **Landed so far:** **WP-20** (Home —
-Tools→"Speedrun Home…"/Ctrl+Shift+H) + **WP-21** (drill: prephrase + name-the-trap) merged to `main`,
-combined build + `just test-ts` + `just test-py` green; **WP-22** (session layer + result/blind-review)
-is next. Open: reasoning-map rail needs a marked-conclusion item field (B033).
+layer; all additive. Design mockups in `docs/speedrun/assets/`. **Landed (all merged to `main`, build +
+`just test-ts`/`test-py` green):** **WP-20** Home, **WP-21** drill (prephrase + name-the-trap), **WP-22**
+session layer (drills/mixed/timed/blind + result), **WP-24** full-window shell (`SPEEDRUN_SHELL` flag:
+Home on launch + Anki chrome hidden). The Home renders + matches the mockup (its earlier "blank/awful" was
+three GUI-only bugs B034/B035/B037, all fixed). **Desktop UX reframe is functionally complete — pending
+owner GUI-verify.** Open polish: B033 (reasoning-map/marked-conclusion field), B036 (session filter/state),
+B038 (Home Memory "no meta cards"), B039 (Sync/Browse button in shell).
 
 **Also next:** **WP-0b (AnkiDroid build)** — #1 risk, dev's machine ([B001](./backlog.md)) —
 **WP-10 (sync)**, AI wiring (WP-13; AI available **Wed night** per current constraint), proof lane
