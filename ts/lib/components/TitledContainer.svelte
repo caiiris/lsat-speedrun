@@ -83,12 +83,14 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
         border-radius: 16px;
         box-shadow: 0 2px 12px rgba(27, 36, 48, 0.07);
     }
+    // Card titles use the practice-questions signature serif (Georgia), matching
+    // the drill stimulus + the Home "Today's focus" heading.
     :global(body.speedrun-stats) h1 {
         color: #3e3a8c;
-        font-family: -apple-system, "Inter", "Helvetica Neue", Arial, sans-serif;
-        font-size: 1.05rem;
-        font-weight: 700;
-        letter-spacing: -0.01em;
+        font-family: "Georgia", "Palatino Linotype", "Book Antiqua", serif;
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0;
         border-bottom-color: #eceff3;
     }
 </style>

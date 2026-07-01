@@ -77,6 +77,10 @@ in graphs-base.scss.  Stock Anki (no ?sr param) is completely unchanged.
     // this route) rather than relying on graphs-base.scss.
     :global(body.speedrun-stats) {
         background: #f5f7fa;
+        // Body text uses the Home/practice grotesk stack (not Anki's default),
+        // so labels, legends and controls match the practice-questions UI.
+        font-family: -apple-system, "Inter", "Helvetica Neue", Arial, sans-serif;
+        color: #1b2430;
     }
 
     // Speedrun WP-27: branded header strip for the stats page.
