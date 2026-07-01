@@ -93,7 +93,14 @@ install_pylib_legacy()
 SPEEDRUN_SHELL: bool = True
 
 MainWindowState = Literal[
-    "startup", "deckBrowser", "overview", "review", "resetRequired", "profileManager"
+    "startup",
+    "deckBrowser",
+    "overview",
+    "review",
+    "resetRequired",
+    "profileManager",
+    # WP-26: Speedrun single-window shell — Home rendered in mw.web
+    "speedrunHome",
 ]
 
 
@@ -673,10 +680,11 @@ class AnkiQt(QMainWindow):
             self.update_undo_actions()
             gui_hooks.collection_did_load(self.col)
             self.apply_collection_options()
-            self.moveToState("deckBrowser")
-            # WP-24: Speedrun shell — open Home as the primary surface on launch
+            # WP-26: single-window shell — Home IS the main window's content
             if SPEEDRUN_SHELL:
-                self.progress.single_shot(200, self._speedrun_auto_open_home, False)
+                self.moveToState("speedrunHome")
+            else:
+                self.moveToState("deckBrowser")
         except Exception:
             # dump error to stderr so it gets picked up by errors.py
             traceback.print_exc()
@@ -796,6 +804,81 @@ class AnkiQt(QMainWindow):
     def _deckBrowserCleanup(self, newState: MainWindowState) -> None:
         if SPEEDRUN_SHELL:
             self.toolbarWeb.setVisible(False)
+
+    # ------------------------------------------------------------------
+    # WP-26: speedrunHome state — Home rendered in mw.web (single window)
+    # ------------------------------------------------------------------
+
+    def _speedrunHomeState(self, oldState: MainWindowState) -> None:
+        """Load the Speedrun Home dashboard into mw.web.
+
+        This makes the ONE main window the Speedrun Home — no separate
+        dialog, no second window.  Closing the window quits normally.
+        """
+        from aqt.speedrun_home import _find_speedrun_deck_id  # noqa: PLC0415
+
+        self.toolbarWeb.setVisible(False)
+        deck_id = _find_speedrun_deck_id(self)
+        self.web.load_sveltekit_page(f"speedrun-dashboard/{deck_id}")
+        self.web.set_bridge_command(self._speedrun_home_bridge_cmd, self)
+
+    def _speedrunHomeCleanup(self, newState: MainWindowState) -> None:
+        """Restore toolbar when leaving the speedrun-home state."""
+        # Other state handlers manage the toolbar for their own transitions;
+        # show it here so deckBrowser / overview / review start from a clean slate.
+        self.toolbarWeb.setVisible(True)
+
+    _SPEEDRUN_ANKI_ACTIONS: dict[str, str] = {
+        "sync": "on_sync_button_clicked",
+        "browse": "onBrowse",
+        "add": "onAddCard",
+        "stats": "onStats",
+        "import": "onImport",
+        "export": "onExport",
+        "deck-options": "onDeckConf",
+        "prefs": "onPrefs",
+    }
+
+    def _speedrun_home_bridge_cmd(self, cmd: str) -> bool:
+        """Handle pycmd() calls from the speedrun-dashboard page in mw.web."""
+        if cmd.startswith("speedrun:home:start-drill:"):
+            focus_skill = cmd[len("speedrun:home:start-drill:"):]
+            self._speedrun_open_session("targeted", focus_skill)
+            return True
+
+        if cmd.startswith("speedrun:home:session:"):
+            session_type = cmd[len("speedrun:home:session:"):]
+            self._speedrun_open_session(session_type, "")
+            return True
+
+        if cmd.startswith("speedrun:anki:"):
+            return self._speedrun_handle_anki_action(cmd[len("speedrun:anki:"):])
+
+        return False
+
+    def _speedrun_handle_anki_action(self, action: str) -> bool:
+        """Dispatch a speedrun:anki:<action> bridge command to the matching mw method."""
+        method_name = self._SPEEDRUN_ANKI_ACTIONS.get(action)
+        if method_name is None:
+            return False
+        method = getattr(self, method_name, None)
+        if method is None:
+            return False
+        method()
+        return True
+
+    def _speedrun_open_session(self, mode: str, focus_skill: str) -> None:
+        """Open a SpeedrunSessionDialog on top of the Home (transient dialog)."""
+        from aqt.speedrun_home import _find_speedrun_deck_id  # noqa: PLC0415
+        from aqt.speedrun_session import SpeedrunSessionDialog  # noqa: PLC0415
+
+        deck_id = _find_speedrun_deck_id(self)
+        SpeedrunSessionDialog.open(
+            self,
+            mode=mode,
+            focus_skill=focus_skill,
+            deck_id=deck_id,
+        )
 
     def _selectedDeck(self) -> DeckDict | None:
         did = self.col.decks.selected()
@@ -1513,13 +1596,15 @@ title="{}" {}>{}</button>""".format(
         self.form.menuTools.insertSeparator(action)
 
     def onSpeedrunHome(self) -> None:
-        """Open the Speedrun Home study-plan screen (WP-20)."""
-        aqt.dialogs.open("SpeedrunHome", self)
+        """Show the Speedrun Home study-plan screen.
 
-    def _speedrun_auto_open_home(self) -> None:
-        """WP-24: Auto-open Speedrun Home maximised as the primary surface on profile load."""
-        dialog = aqt.dialogs.open("SpeedrunHome", self)
-        dialog.showMaximized()
+        WP-26: in shell mode the Home IS mw.web, so we just (re-)load the
+        speedrunHome state.  With SPEEDRUN_SHELL=False the old dialog is used.
+        """
+        if SPEEDRUN_SHELL:
+            self.moveToState("speedrunHome")
+        else:
+            aqt.dialogs.open("SpeedrunHome", self)
 
     def updateTitleBar(self) -> None:
         self.setWindowTitle("Speedrun" if SPEEDRUN_SHELL else "Anki")
@@ -1884,7 +1969,7 @@ title="{}" {}>{}</button>""".format(
 
     def interactiveState(self) -> bool:
         "True if not in profile manager, syncing, etc."
-        return self.state in ("overview", "review", "deckBrowser")
+        return self.state in ("overview", "review", "deckBrowser", "speedrunHome")
 
     # GC
     ##########################################################################

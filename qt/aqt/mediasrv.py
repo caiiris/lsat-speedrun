@@ -829,12 +829,14 @@ def _check_dynamic_request_permissions():
     if _have_api_access():
         return
 
-    # whitelisted API endpoints for reviewer/previewer
+    # whitelisted API endpoints for reviewer/previewer and speedrunHome
     if request.path in (
         "/_anki/getSchedulingStatesWithContext",
         "/_anki/setSchedulingStates",
         "/_anki/i18nResources",
         "/_anki/congratsInfo",
+        # WP-26: speedrun-dashboard loaded in mw.web (MAIN kind, no full API access)
+        "/_anki/speedrunDashboard",
     ):
         pass
     else:
