@@ -4,6 +4,7 @@
 mod card;
 mod graphs;
 pub mod measurement;
+pub(crate) mod performance;
 mod service;
 mod today;
 

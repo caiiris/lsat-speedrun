@@ -2,6 +2,12 @@
 // License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 use anki_proto::stats::SkillMastery;
 use anki_proto::stats::SkillMasteryResponse;
+use anki_proto::stats::SpeedrunDashboardRequest;
+use anki_proto::stats::SpeedrunDashboardResponse;
+use anki_proto::stats::SpeedrunMemoryScore;
+use anki_proto::stats::SpeedrunReadinessAbstain;
+use anki_proto::stats::SpeedrunReadinessEligible;
+use anki_proto::stats::SpeedrunSkillPerf;
 use fsrs::FSRS;
 use fsrs::FSRS5_DEFAULT_DECAY;
 
@@ -9,6 +15,8 @@ use crate::collection::Collection;
 use crate::error;
 use crate::error::Result;
 use crate::revlog::RevlogReviewKind;
+use crate::stats::measurement::GateReason;
+use crate::stats::performance::ReadinessResult;
 use crate::storage::card::data::CardData;
 use crate::timestamp::TimestampSecs;
 
@@ -62,6 +70,23 @@ impl crate::services::StatsService for Collection {
         input: anki_proto::stats::SkillMasteryRequest,
     ) -> error::Result<anki_proto::stats::SkillMasteryResponse> {
         self.skill_mastery_impl(input.deck_id)
+    }
+
+    /// Speedrun WP-14: three-score dashboard (Memory + Performance + Readiness).
+    ///
+    /// Returns a combined payload with:
+    /// - Memory: mean FSRS recall over LSAT Meta cards + 95% bootstrap CI.
+    /// - Performance: per-skill Wilson accuracy from the skill-card revlog.
+    /// - Readiness: either an Abstain payload (no point estimate) or an Eligible
+    ///   payload (point + band + confidence) labeled "LR-only estimate".
+    ///
+    /// The dashboard MUST NOT display a Readiness number when `eligible = false`
+    /// (D-SR10, spec-measurement §6).
+    fn speedrun_dashboard(
+        &mut self,
+        input: SpeedrunDashboardRequest,
+    ) -> error::Result<SpeedrunDashboardResponse> {
+        self.speedrun_dashboard_impl(input.deck_id)
     }
 }
 
@@ -152,6 +177,101 @@ impl Collection {
             .collect();
 
         Ok(SkillMasteryResponse { skills })
+    }
+
+    fn speedrun_dashboard_impl(&mut self, deck_id: i64) -> Result<SpeedrunDashboardResponse> {
+        use crate::stats::performance::compute_lr_coverage;
+
+        // ── Memory (from LSAT Meta cards) ─────────────────────────────────────
+        let memory: Option<SpeedrunMemoryScore> =
+            self.memory_score_impl(deck_id)?.map(|m| SpeedrunMemoryScore {
+                mean_recall: m.mean_recall,
+                ci_lower: m.ci_lower,
+                ci_upper: m.ci_upper,
+                card_count: m.card_count,
+            });
+
+        // ── Performance + Readiness (from LSAT Skill revlog) ─────────────────
+        let (perf, readiness) = self.performance_and_readiness_impl(deck_id)?;
+
+        let lr_coverage = compute_lr_coverage(&perf.skills);
+
+        let skill_perf: Vec<SpeedrunSkillPerf> = perf
+            .skills
+            .iter()
+            .map(|s| SpeedrunSkillPerf {
+                skill: s.skill.clone(),
+                attempts: s.attempts,
+                correct: s.correct,
+                wilson_low: s.wilson_low,
+                wilson_high: s.wilson_high,
+            })
+            .collect();
+
+        let (eligible, abstain, readiness_eligible) = match readiness {
+            ReadinessResult::Abstain {
+                reasons,
+                coverage,
+                total_attempts,
+                next_best,
+            } => {
+                let reason_strs: Vec<String> = reasons
+                    .iter()
+                    .map(|r| match r {
+                        GateReason::MinAttempts { have, need } => {
+                            format!("Need ≥{need} total attempts (have {have})")
+                        }
+                        GateReason::MinCoverage { have, need } => {
+                            format!(
+                                "Need ≥{:.0}% LR coverage (have {:.0}%)",
+                                need * 100.0,
+                                have * 100.0
+                            )
+                        }
+                    })
+                    .collect();
+                let abstain_msg = SpeedrunReadinessAbstain {
+                    reasons: reason_strs,
+                    coverage,
+                    total_attempts,
+                    next_best: next_best.unwrap_or_default(),
+                };
+                (false, Some(abstain_msg), None)
+            }
+            ReadinessResult::Eligible {
+                point,
+                band_low,
+                band_high,
+                confidence,
+                coverage,
+                total_attempts,
+                top_skills,
+                next_best,
+            } => {
+                let eligible_msg = SpeedrunReadinessEligible {
+                    point,
+                    band_low,
+                    band_high,
+                    confidence: confidence.to_owned(),
+                    coverage,
+                    total_attempts,
+                    top_skills,
+                    next_best: next_best.unwrap_or_default(),
+                };
+                (true, None, Some(eligible_msg))
+            }
+        };
+
+        Ok(SpeedrunDashboardResponse {
+            memory,
+            skill_perf,
+            overall_perf: perf.overall_weighted,
+            lr_coverage,
+            total_attempts: perf.total_attempts,
+            eligible,
+            abstain,
+            readiness: readiness_eligible,
+        })
     }
 }
 

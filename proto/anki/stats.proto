@@ -19,6 +19,9 @@ service StatsService {
   // Speedrun (WP-2/WP-5): per-skill mastery aggregate feeding the dashboard.
   // See docs/speedrun/spec-engine.md §5.4/§5.5.
   rpc SkillMastery(SkillMasteryRequest) returns (SkillMasteryResponse);
+  // Speedrun (WP-14): three-score dashboard (Memory + Performance + Readiness).
+  // See docs/speedrun/spec-measurement.md §4, §8; decisions.md D-SR9/D-SR10/D-SR18/D-SR19.
+  rpc SpeedrunDashboard(SpeedrunDashboardRequest) returns (SpeedrunDashboardResponse);
 }
 
 // Implicitly includes any of the above methods that are not listed in the
@@ -258,4 +261,93 @@ message Dataset {
   repeated CardEntry cards = 2;
   repeated DeckEntry decks = 3;
   int64 next_day_at = 4;
+}
+
+// ─── Speedrun WP-14: three-score dashboard ────────────────────────────────────
+// See docs/speedrun/spec-measurement.md §4, §8 and decisions.md D-SR9/D-SR10/D-SR18/D-SR19.
+// Append-only; existing messages and RPCs above are NOT edited.
+
+// Request: the root Speedrun deck ID (all child decks are included).
+message SpeedrunDashboardRequest {
+  int64 deck_id = 1;
+}
+
+// Memory score (from LSAT Meta cards via FSRS recall — spec-measurement §4.1).
+message SpeedrunMemoryScore {
+  // Arithmetic mean of per-card FSRS recall probabilities [0, 1].
+  float mean_recall = 1;
+  // 95% bootstrap CI lower bound.
+  float ci_lower = 2;
+  // 95% bootstrap CI upper bound.
+  float ci_upper = 3;
+  // Number of LSAT Meta cards in the deck hierarchy (including unreviewed).
+  uint32 card_count = 4;
+}
+
+// Per-skill Performance bar (spec-measurement §4.2).
+// Skills with < 5 attempts have wilson_low=0 / wilson_high=1 (insufficient data).
+message SpeedrunSkillPerf {
+  // Canonical identity tag (e.g. "type::flaw").
+  string skill = 1;
+  // Total review attempts for this skill card.
+  uint32 attempts = 2;
+  // Correct count (ease >= 2 in revlog).
+  uint32 correct = 3;
+  // Wilson score 95% CI lower bound.
+  float wilson_low = 4;
+  // Wilson score 95% CI upper bound.
+  float wilson_high = 5;
+}
+
+// Readiness abstain payload — shown when gate refuses to emit a projection.
+// No point estimate is present (D-SR10, spec-measurement §6).
+message SpeedrunReadinessAbstain {
+  // Human-readable reasons (e.g. "Need ≥200 total attempts (have 42)").
+  repeated string reasons = 1;
+  // Current LR coverage (fraction of 13-type taxonomy with ≥5 attempts).
+  float coverage = 2;
+  // Total attempts seen so far.
+  uint32 total_attempts = 3;
+  // The single best skill to practice next (may be empty if no data).
+  string next_best = 4;
+}
+
+// Readiness eligible payload — a labeled "LR-only estimate" (D-SR19).
+message SpeedrunReadinessEligible {
+  // Projected scaled score (120–180), LR-only estimate × scale factor.
+  uint32 point = 1;
+  // Lower bound of the honest scaled-score band.
+  uint32 band_low = 2;
+  // Upper bound of the honest scaled-score band.
+  uint32 band_high = 3;
+  // Confidence tier: "low" / "medium" / "high".
+  string confidence = 4;
+  // LR coverage fraction.
+  float coverage = 5;
+  // Total attempts across all skills.
+  uint32 total_attempts = 6;
+  // Top 3 contributing skills (highest w_S * Perf(S)).
+  repeated string top_skills = 7;
+  // Single best next skill to practice.
+  string next_best = 8;
+}
+
+// Combined dashboard response — one RPC, three score cards.
+message SpeedrunDashboardResponse {
+  // Memory score from LSAT Meta cards.  Not set if no Meta cards in deck.
+  optional SpeedrunMemoryScore memory = 1;
+  // Per-skill Performance bars (sorted by skill name).
+  repeated SpeedrunSkillPerf skill_perf = 2;
+  // Frequency-weighted overall Performance (0..1), from covered skills only.
+  float overall_perf = 3;
+  // LR coverage fraction (fraction of 13-type taxonomy with ≥5 attempts).
+  float lr_coverage = 4;
+  // Total review attempts across all skill cards (all skills, all decks).
+  uint32 total_attempts = 5;
+  // Exactly one of abstain/eligible is set (never both).
+  // eligible is false when abstaining; the dashboard must NOT show a Readiness
+  // number when eligible = false (D-SR10, spec-measurement §6).
+  bool eligible = 6;
+  SpeedrunReadinessAbstain abstain = 7;
+  SpeedrunReadinessEligible readiness = 8;
 }
