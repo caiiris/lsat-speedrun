@@ -8,3 +8,111 @@ button {
 html {
     height: initial;
 }
+
+// ── Speedrun WP-27: Statistics page design language ───────────────────────────
+// Gate: only active when the Qt shell sets SPEEDRUN_SHELL=True (stats.py
+// appends ?sr=1, +page.svelte adds body.speedrun-stats).
+// Stock Anki (no ?sr param) never gets this class → completely unaffected.
+//
+// Strategy: override Anki's CSS custom properties so all child components
+// (TitledContainer, RangeBox, etc.) inherit the Speedrun palette without
+// touching shared component files.  Chart D3 internals are left at their
+// default colors (hardcoded in TS); only page/card/typography is restyled.
+//
+// Palette (spec-ui §2):
+//   cool pale paper  #F5F7FA   slate ink  #1B2430
+//   indigo accent    #3E3A8C   success    #2E7D5B
+//   muted clay       #B4472E   amber      #C99A2E (sparingly)
+
+body.speedrun-stats {
+    // Page background: cool pale paper
+    background: #f5f7fa !important;
+    color: #1b2430;
+    font-family: -apple-system, "Inter", "Helvetica Neue", Arial, sans-serif;
+
+    // ── CSS variable overrides (cascade to all child components) ─────────────
+    // These override the Anki token system so TitledContainer, RangeBox, etc.
+    // automatically pick up the Speedrun palette.
+    --canvas: #f5f7fa;           // page / sticky bar background
+    --canvas-elevated: #ffffff;  // card (TitledContainer) background
+    --border: #dde2e9;           // standard borders
+    --border-subtle: #dde2e9;    // TitledContainer card border
+    --fg: #1b2430;               // primary text
+    --fg-subtle: #6b7280;        // secondary / muted text
+    --border-radius-medium: 12px; // card corner radius (matches Home cards)
+    --border-focus: #3e3a8c;     // indigo focus ring
+    --shadow-focus: rgba(62, 58, 140, 0.25); // indigo focus glow
+
+    // ── Card headings (TitledContainer h1) ───────────────────────────────────
+    h1 {
+        font-family: -apple-system, "Inter", "Helvetica Neue", Arial, sans-serif;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #3e3a8c;           // indigo accent for card titles
+        border-bottom-color: #dde2e9;
+        padding-bottom: 0.4em;
+        margin-bottom: 0.5em;
+    }
+
+    // ── Sticky controls bar (RangeBox) ───────────────────────────────────────
+    // var(--canvas) already handles the background; add a white pill and
+    // refine spacing to match the Home header feel.
+    .range-box {
+        background: #ffffff;
+        border-bottom-color: #dde2e9;
+        color: #1b2430;
+        box-shadow: 0 1px 4px rgba(27, 36, 48, 0.06);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75em;
+        padding: 0.6em 1.25em;
+    }
+
+    // ── Form controls ────────────────────────────────────────────────────────
+    input[type="radio"] {
+        accent-color: #3e3a8c;
+    }
+
+    input[type="text"] {
+        border-color: #dde2e9;
+        border-radius: 6px;
+        color: #1b2430;
+        background: #ffffff;
+
+        &:focus {
+            border-color: #3e3a8c;
+            box-shadow: 0 0 0 3px rgba(62, 58, 140, 0.15);
+        }
+    }
+
+    // ── Graph tick labels ─────────────────────────────────────────────────────
+    // D3 renders ticks as SVG <text>; use a fill override for muted ink.
+    // (Graph.svelte scopes .tick text { opacity: 0.5 } which cascades OK.)
+    .tick text {
+        fill: #1b2430;
+    }
+
+    // ── Graph card containers (TitledContainer elevation) ─────────────────────
+    // The light-mode elevation mixin adds a box-shadow; keep it but tint it
+    // toward the Speedrun shadow color.
+    .container.light {
+        box-shadow: 0 1px 4px rgba(27, 36, 48, 0.08), 0 0 0 1px #dde2e9;
+    }
+
+    // ── Buttons ───────────────────────────────────────────────────────────────
+    button:not(.btn, .btn-close) {
+        border-color: #dde2e9;
+
+        &:hover {
+            border-color: #3e3a8c;
+            color: #3e3a8c;
+        }
+
+        &:focus-visible {
+            outline: 2px solid #3e3a8c;
+            outline-offset: 2px;
+        }
+    }
+}
