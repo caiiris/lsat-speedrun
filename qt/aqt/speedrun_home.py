@@ -11,12 +11,9 @@ Entry point: open() classmethod — add to Tools menu from main.py.
 
 Bridge commands received from the web page (pycmd calls):
   speedrun:home:start-drill:<skill>
-      WP-22 SEAM: until the session layer exists, opens the study screen
-      for the LSAT Speedrun deck.  Replace with a proper session route
-      once ts/routes/speedrun-session/ is built (WP-22).
+      Opens a targeted-drill session (WP-22) for <skill>.
   speedrun:home:session:<type>
-      WP-22 SEAM: mixed / timed / blind session launchers.  Same fallback
-      until WP-22 ships.
+      Opens a session of the specified type: mixed | timed | blind.
 """
 from __future__ import annotations
 
@@ -109,49 +106,28 @@ class SpeedrunHomeDialog(QDialog):
     def _on_bridge_cmd(self, cmd: str) -> bool:
         """Handle pycmd() calls from the Home screen web page."""
         if cmd.startswith("speedrun:home:start-drill:"):
-            # WP-22 SEAM: open deck study as the best available entry until
-            # the session layer (ts/routes/speedrun-session/) exists.
-            # TODO(WP-22): replace with a proper session route navigation.
-            self._open_study_fallback()
+            focus_skill = cmd[len("speedrun:home:start-drill:"):]
+            self._open_session("targeted", focus_skill)
             return True
 
         if cmd.startswith("speedrun:home:session:"):
-            # WP-22 SEAM: session launchers (mixed / timed / blind).
-            # TODO(WP-22): navigate to the appropriate session route.
-            session_type = cmd[len("speedrun:home:session:") :]
-            self._open_session_fallback(session_type)
+            session_type = cmd[len("speedrun:home:session:"):]
+            self._open_session(session_type, "")
             return True
 
         return False
 
-    def _open_study_fallback(self) -> None:
-        """
-        WP-22 SEAM — fallback for 'Start targeted drill' until WP-22.
-
-        Closes this dialog and switches to the study/overview state for
-        the LSAT Speedrun deck.  WP-22 will replace this with a proper
-        in-dialog session that uses the SvelteKit session routes.
-        """
-        from anki.decks import DeckId
-        from aqt.operations.deck import set_current_deck
+    def _open_session(self, mode: str, focus_skill: str) -> None:
+        """Open a SpeedrunSessionDialog for the given mode and focus skill."""
+        from aqt.speedrun_session import SpeedrunSessionDialog  # noqa: PLC0415
 
         deck_id = _find_speedrun_deck_id(self.mw)
-        self.reject()
-        if self.mw.col:
-            set_current_deck(
-                parent=self.mw,
-                deck_id=DeckId(deck_id),
-            ).success(lambda _: self.mw.moveToState("overview")).run_in_background()
-
-    def _open_session_fallback(self, session_type: str) -> None:
-        """
-        WP-22 SEAM — fallback for session launchers until WP-22.
-
-        Falls through to the same study-fallback for now; WP-22 will wire
-        mixed / timed / blind to dedicated session routes.
-        """
-        # TODO(WP-22): differentiate by session_type
-        self._open_study_fallback()
+        SpeedrunSessionDialog.open(
+            self.mw,
+            mode=mode,
+            focus_skill=focus_skill,
+            deck_id=deck_id,
+        )
 
     # ------------------------------------------------------------------
     # Lifecycle
