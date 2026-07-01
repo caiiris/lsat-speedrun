@@ -52,9 +52,9 @@
 | WP-17 | Interleaving ablation (3 builds) | 3 | Study-feature | not started |
 | WP-18 | One-command benchmark + perf targets | 3 | Bench | not started |
 | WP-19 | Packaging (APK/TestFlight + installer + crash) | 3 | Packaging | not started |
-| WP-20 | Home study-plan surface (reshape WP-14 dashboard → home) | UX | Desktop-UI | not started |
-| WP-21 | Drill interaction surface (prephrase + name-the-trap; reshape WP-6) | UX | Desktop-Reviewer | not started |
-| WP-22 | Session layer + result/blind-review (drills/mixed/timed) | UX | Desktop-UI | not started |
+| WP-20 | Home study-plan surface (reshape WP-14 dashboard → home) | UX | Desktop-UI | landed ✅ (merged; Tools→Speedrun Home / Ctrl+Shift+H; session launchers stubbed → WP-22) |
+| WP-21 | Drill interaction surface (prephrase + name-the-trap; reshape WP-6) | UX | Desktop-Reviewer | landed ✅ (merged; prephrase + name-the-trap + de-Anki chrome; reasoning-map deferred B033; stale WP-6 tests fixed) |
+| WP-22 | Session layer + result/blind-review (drills/mixed/timed) | UX | Desktop-UI | next up |
 | WP-23 | RC passage workspace | UX | Desktop-UI | deferred (phase-2) |
 
 ## Dependency graph
@@ -420,7 +420,7 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
   WP-21 → WP-22, WP-20 anytime.
 
 ### WP-20 — Home study-plan surface
-- **Lane:** Desktop-UI · **Depends on:** WP-14 (dashboard RPC, done) · **Status:** not started
+- **Lane:** Desktop-UI · **Depends on:** WP-14 (dashboard RPC, done) · **Status:** done (merged 2026-07-01; `ts/routes/speedrun-dashboard/` reshaped, `qt/aqt/speedrun_home.py` + Tools→"Speedrun Home…"/Ctrl+Shift+H). Session launchers + "Start drill" stubbed to deck-study until WP-22.
 - **Goal:** Reshape the `speedrun-dashboard` route into the **Home** (spec-ui §3.1): the three
   scores with the honest **abstain panel**, **"Today's focus"** = the dashboard's next-best-thing
   with a primary "Start targeted drill", the session-type launchers, and the per-type **skill map**.
@@ -431,7 +431,7 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
   one recommended drill launches a session; no deck-list surface reachable in the Speedrun flow.
 
 ### WP-21 — Drill interaction surface (prephrase + name-the-trap)
-- **Lane:** Desktop-Reviewer · **Depends on:** WP-6 (reviewer, done), WP-3 (draw) · **Status:** not started
+- **Lane:** Desktop-Reviewer · **Depends on:** WP-6 (reviewer, done), WP-3 (draw) · **Status:** done (merged 2026-07-01; `qt/aqt/speedrun.py` + `reviewer.py`: prephrase→self-check, deterministic name-the-trap vs `TrapChoiceX`, confidence, de-Anki chrome). Reasoning-map rail deferred → B033. Stale WP-6 tests updated to the new markup (35/35 green).
 - **Goal:** Extend the WP-6 commit-then-reveal surface (spec-ui §3.2, D-SR34): add the **prephrase**
   state (choices hidden until predicted; self-scored on reveal), the **name-the-trap** amber chips
   on a wrong commit (**deterministic** vs `TrapChoiceX` — no AI), the **reasoning map** rail, an

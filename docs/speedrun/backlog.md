@@ -17,7 +17,7 @@
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032 |
+| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
 | fixed / done | B008, B009, B010, B021, B031 |
 
@@ -332,6 +332,17 @@
 - **Context:** the dashboard route is functional and honesty-faithful (three cards, Wilson-CI bars, abstain panel with no Readiness number, always-visible "LR-only estimate" badge), but the UI is minimal: no interactive **deck picker** (deck_id comes from the route param), **English literals** (no `ftl` i18n), no dark-mode polish/animations, and no calibration/paraphrase chart integration.
 - **Resolution:** add a deck picker + i18n strings + visual polish; wire the proof-eval charts (WP-16) when they produce output.
 - **Links:** WP-14; spec-measurement §8; WP-16.
+
+### B033 — Reasoning map + stimulus flaw not surfaced (needs a marked-conclusion item field)
+
+- **Type:** issue · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-07-01 by WP-21 build agent (inbox L3) + orchestrator merge review
+- **Ref:** `qt/aqt/speedrun.py` (`build_reveal_html` rail placeholder), `tools/speedrun/deck/build_seed_deck.py` (LSAT Item notetype), spec-ui §3.2; D-SR34
+- **Context:** the drill's **Reasoning map** rail (Premise / Conclusion / The gap, spec-ui §3.2) is a **placeholder** — the `LSAT Item` notetype has no marked-conclusion field, so it can't be populated deterministically (and inventing premise/conclusion parsing would need AI/NLP). Relatedly, the redesigned reveal (WP-21) **no longer surfaces the stimulus-level flaw** (`TrapTag`) that the old reviewer showed; it belongs in this rail. Per-choice trap categories (`TrapChoiceX`) *are* shown.
+- **Resolution:** add an additive **`Conclusion`/`MarkedConclusion` field** to the LSAT Item notetype + `build_seed_deck.py` (data, not schema — rides notetype fields), populate it, then render the reasoning map + stimulus flaw. Confirm with spec owner.
+- **Links:** D-SR34; spec-ui §3.2; relates D-SR13 (taxonomy)/B013 (item data model).
+
+Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6 `qt/tests/test_speedrun.py` asserted the old markup, so **8 tests were stale after merge** — updated by the orchestrator to the new intended behavior (verdict "You chose X", humanized "Trap category", accordion why-wrong, generic "Next question"). Suite green again (35/35). Not a bug — flagged so the history is clear.
 
 ---
 

@@ -173,7 +173,7 @@ class TestBuildItemQuestionHtml:
         fields = _make_item_fields()
         html = build_item_question_html(fields)
         for label in "ABCDE":
-            assert f'data-choice="{label}"' in html
+            assert fields[f"Choice{label}"] in html
 
     def test_choices_have_pycmd_commit(self) -> None:
         fields = _make_item_fields()
@@ -219,26 +219,34 @@ class TestBuildItemAnswerHtml:
     def test_committed_choice_highlighted(self) -> None:
         fields = _make_item_fields(correct="B")
         html = build_item_answer_html(fields, "A")
-        assert "your answer" in html.lower()
+        # The redesigned verdict banner names the committed choice ("You chose A").
+        assert "You chose" in html and "A" in html
 
     def test_per_choice_explanations_present(self) -> None:
         fields = _make_item_fields(correct="B")
         html = build_item_answer_html(fields, "B")
         for label in "ABCDE":
-            # Each choice label should appear in the explanations
-            assert f"<strong>{label}:</strong>" in html
+            # Each choice's why-wrong/why-correct text is in the reveal accordion
+            # (hidden rows are still present in the server-rendered HTML).
+            assert fields[f"WhyWrong{label}"] in html
 
     def test_trap_tag_shown(self) -> None:
         fields = _make_item_fields(correct="B")
         fields["TrapChoiceA"] = "trap::sufficient-necessary"
         html = build_item_answer_html(fields, "B")
-        assert "trap::sufficient-necessary" in html
+        # Wrong choice A's trap is surfaced as a humanized "Trap category" chip,
+        # not the raw tag string (D-SR34 / spec-ui §2).
+        assert "Trap category" in html
+        assert "trap::sufficient-necessary" not in html
 
-    def test_stimulus_trap_tag_shown_when_present(self) -> None:
+    def test_stimulus_flaw_display_deferred(self) -> None:
+        # The stimulus-level flaw (TrapTag) is not surfaced in the redesigned
+        # reveal yet — it belongs in the deferred reasoning-map rail (B033).
+        # This pins current behavior: the rail placeholder is present.
         fields = _make_item_fields(correct="B")
         fields["TrapTag"] = "trap::correlation-causation"
         html = build_item_answer_html(fields, "B")
-        assert "trap::correlation-causation" in html
+        assert "REASONING MAP" in html
 
     def test_answer_contains_hr_anchor(self) -> None:
         """The #answer anchor is required so the reviewer scrolls to it."""
@@ -257,9 +265,8 @@ class TestBuildItemAnswerHtml:
         """When committed == correct, single 'CORRECT — YOUR ANSWER' tag shown."""
         fields = _make_item_fields(correct="D")
         html = build_item_answer_html(fields, "D")
-        # Should show combined badge
-        assert "your answer" in html.lower()
         assert "Correct!" in html
+        assert "You chose" in html  # verdict names the (correct) committed choice
 
 
 # ---------------------------------------------------------------------------
@@ -273,12 +280,14 @@ class TestBottomBarHelpers:
         assert "A–E" in html or "A/B/C/D/E" in html or "A" in html
 
     def test_continue_button_again_label(self) -> None:
+        # De-Anki'd: the bottom bar is a single generic "Next question" button
+        # regardless of the derived rating (no Again/Good ease labels).
         html = bottom_continue_button(RATING_AGAIN)
-        assert "Again" in html or "wrong" in html.lower()
+        assert "Next question" in html
 
     def test_continue_button_good_label(self) -> None:
         html = bottom_continue_button(RATING_GOOD)
-        assert "Good" in html or "correct" in html.lower()
+        assert "Next question" in html
 
     def test_continue_button_pycmd(self) -> None:
         for ease in (RATING_AGAIN, RATING_GOOD):
