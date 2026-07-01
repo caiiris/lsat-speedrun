@@ -5,6 +5,7 @@ mod builder;
 mod entry;
 mod learning;
 mod main;
+pub(crate) mod selection;
 pub(crate) mod undo;
 
 use std::collections::VecDeque;

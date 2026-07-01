@@ -101,6 +101,27 @@ class Scheduler(SchedulerBaseWithLegacy):
         "True if new state marks the card as a leech."
         return self.col._backend.state_is_leech(new_state)
 
+    # Speedrun WP-3
+    ##########################################################################
+
+    def draw_item_for_skill(self, skill_card_id: int) -> int:
+        """Speedrun WP-3: select a fresh LSAT item note for a due skill card.
+
+        Given the card id of a skill card (``LSAT Skill`` notetype), searches
+        the item pool in deck ``LSAT Speedrun::Items`` for item notes tagged
+        with the skill's identity tag, applies the served-item sidecar window
+        to avoid repeats, and returns the ``note_id`` of the chosen item note.
+
+        The caller is responsible for rendering the item and answering the
+        *skill* card via ``answer_card``.  The item note is never directly
+        answered.  (spec-engine §5.2 + §7, D-SR4)
+
+        The generated backend auto-unwraps single-field proto responses, so
+        the return value is the ``item_note_id`` scalar directly (an ``int``),
+        not the full ``DrawItemForSkillResponse`` proto.
+        """
+        return self.col._backend.draw_item_for_skill(skill_card_id=skill_card_id)
+
     # Fetching the next card (legacy API)
     ##########################################################################
 
