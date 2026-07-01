@@ -1448,6 +1448,10 @@ title="{}" {}>{}</button>""".format(
         qconnect(m.action_check_for_updates.triggered, self.on_check_for_updates)
         qconnect(m.actionPreferences.triggered, self.onPrefs)
 
+        # Speedrun WP-20: Home study-plan screen — add to Tools menu dynamically
+        # (avoids touching the .ui file / regenerating the form class).
+        self._setup_speedrun_home_menu()
+
         # View
         qconnect(
             m.actionZoomIn.triggered,
@@ -1464,6 +1468,28 @@ title="{}" {}>{}</button>""".format(
             QKeySequence("F11") if is_lin else QKeySequence.StandardKey.FullScreen
         )
         m.actionFullScreen.setShortcutContext(Qt.ShortcutContext.ApplicationShortcut)
+
+    def _setup_speedrun_home_menu(self) -> None:
+        """
+        Speedrun WP-20: add 'Speedrun Home…' to the Tools menu.
+
+        Done programmatically so the upstream .ui file is not touched (keeps
+        rebase cost low).  The separator before Preferences is preserved.
+        """
+        from aqt.qt import QAction
+
+        action = QAction("Speedrun Home…", self)
+        action.setShortcut("Ctrl+Shift+H")
+        qconnect(action.triggered, self.onSpeedrunHome)
+        # Insert before the Preferences action so it groups near the top
+        self.form.menuTools.insertAction(
+            self.form.actionPreferences, action
+        )
+        self.form.menuTools.insertSeparator(action)
+
+    def onSpeedrunHome(self) -> None:
+        """Open the Speedrun Home study-plan screen (WP-20)."""
+        aqt.dialogs.open("SpeedrunHome", self)
 
     def updateTitleBar(self) -> None:
         self.setWindowTitle("Anki")

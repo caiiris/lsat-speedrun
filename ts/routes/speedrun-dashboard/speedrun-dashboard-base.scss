@@ -1,14 +1,36 @@
 // Copyright: Ankitects Pty Ltd and contributors
 // License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 //
-// Base styles for the Speedrun dashboard page.
+// Speedrun WP-20: base page styles for the Home study-plan surface.
+// Design language: spec-ui §2 — cool pale paper, slate ink, indigo accent.
 
 @use "sass:math";
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
-    font-family: system-ui, -apple-system, sans-serif;
+    // Grotesk UI font (spec-ui §2)
+    font-family: -apple-system, "Inter", "Helvetica Neue", Arial, sans-serif;
     font-size: 14px;
-    background: var(--canvas, #fafafa);
-    color: var(--fg, #222);
+    // Cool pale paper background (spec-ui §2)
+    background: #F5F7FA;
+    // Slate ink (spec-ui §2)
+    color: #1B2430;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+// Reduced motion support (spec-ui §2 quality floor)
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }
