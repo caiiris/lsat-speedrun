@@ -114,6 +114,10 @@ export function reviewOrderChoices(
                 label: tr.decksLatestAddedFirst(),
                 value: DeckConfig_Config_ReviewCardOrder.REVERSE_ADDED,
             },
+            {
+                label: tr.deckConfigSortOrderInterleavedSkills(),
+                value: DeckConfig_Config_ReviewCardOrder.INTERLEAVED_SKILLS,
+            },
         ],
     ];
 }
