@@ -748,6 +748,7 @@ exposed_backend_list = [
     "graphs",
     "get_graph_preferences",
     "set_graph_preferences",
+    "speedrun_dashboard",  # Speedrun WP-14/WP-20: Home study-plan dashboard RPC
     # TagsService
     "complete_tag",
     # ImageOcclusionService

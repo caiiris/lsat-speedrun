@@ -19,7 +19,7 @@
 |---|---|
 | open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
-| fixed / done | B008, B009, B010, B021, B031, B034 |
+| fixed / done | B008, B009, B010, B021, B031, B034, B035 |
 
 ---
 
@@ -352,6 +352,15 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 - **Context:** the page loader did `parseInt(params.deckId)` → a JS **number**, but `deck_id` is `int64` so the generated client expects a **`bigint`**; passing a number throws at request-build time, so the `load()` fails and the page renders **blank**. Never hit before because WP-14/WP-20 were verified by build+unit tests, not the GUI. (This is the "bigint/number mismatch" svelte-check had flagged.)
 - **Resolution (2026-07-01):** convert to `BigInt(...)` in `+page.ts` and `index.ts`; `just build` green. WP-24's Home redesign inherits the fixed loader.
 - **Links:** WP-14/WP-20; D-SR32; feeds WP-24 (Home redesign).
+
+### B035 — `speedrunDashboard` RPC 404s from the web (not in mediasrv `exposed_backend_list`)
+
+- **Type:** bug · **Status:** fixed · **Severity:** high
+- **Discovered:** 2026-07-01 by owner (Home showed `404: Invalid path: _anki/speedrunDashboard`) + Opus
+- **Ref:** `qt/aqt/mediasrv.py` (`exposed_backend_list` / `post_handlers`)
+- **Context:** the web frontend calls backend RPCs by POSTing `/_anki/<method>`; mediasrv only routes methods listed in `exposed_backend_list` (→ `<method>_raw` on `RustBackend`). WP-14 added the `SpeedrunDashboard` RPC + pylib wrapper but **never added `speedrun_dashboard` to `exposed_backend_list`**, so the Home's fetch 404'd. (Only surfaced now because WP-14 was verified via pylib/Rust, not an actual web call.)
+- **Resolution (2026-07-01):** added `"speedrun_dashboard"` under StatsService in `exposed_backend_list`; verified `mediasrv` imports and `speedrunDashboard` is registered. **Lesson:** any new frontend-facing backend RPC must be added here.
+- **Links:** B034 (same chain — dashboard RPC never exercised over the web); WP-14/WP-20; feeds WP-24.
 
 ---
 
