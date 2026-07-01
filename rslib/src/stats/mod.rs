@@ -3,7 +3,13 @@
 
 mod card;
 mod graphs;
+pub mod measurement;
 mod service;
 mod today;
 
+pub use measurement::GateReason;
+pub use measurement::GateResult;
+pub use measurement::MemoryScore;
+pub use measurement::compute_memory_score;
+pub use measurement::readiness_gate;
 pub use today::studied_today;
