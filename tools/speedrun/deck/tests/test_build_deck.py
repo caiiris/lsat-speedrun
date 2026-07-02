@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 from typing import Generator
@@ -28,9 +29,19 @@ from typing import Generator
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-BUILD_DECK_MODULE = REPO_ROOT / "tools" / "speedrun" / "deck" / "build_seed_deck.py"
-SAMPLE_ITEMS_JSON = REPO_ROOT / "tools" / "speedrun" / "deck" / "sample_items.json"
+DECK_DIR = REPO_ROOT / "tools" / "speedrun" / "deck"
+BUILD_DECK_MODULE = DECK_DIR / "build_seed_deck.py"
+ITEMS_DIR = DECK_DIR / "items"
 TAXONOMY_JSON = REPO_ROOT / "docs" / "speedrun" / "data" / "taxonomy.json"
+
+# The item pool lives as per-type files under deck/items/, merged by the loader.
+sys.path.insert(0, str(DECK_DIR))
+
+
+def _pool_items() -> list[dict]:
+    from items_loader import load_items
+
+    return load_items(ITEMS_DIR)["items"]
 
 
 # ---------------------------------------------------------------------------
@@ -87,7 +98,7 @@ def coverage_report(tmp_col_path: str):
 
     return build_seed_deck(
         col_path=tmp_col_path,
-        items_json_path=SAMPLE_ITEMS_JSON,
+        items_json_path=ITEMS_DIR,
         min_pool_size=1,  # use 1 for seed test so most skills pass
         verbose=False,
     )
@@ -113,14 +124,15 @@ def open_col(tmp_col_path: str, coverage_report):
 # Sample items file
 # ---------------------------------------------------------------------------
 
-class TestSampleItemsFile:
-    def test_sample_items_file_exists(self) -> None:
-        assert SAMPLE_ITEMS_JSON.exists(), f"sample_items.json not found: {SAMPLE_ITEMS_JSON}"
+class TestItemPoolFiles:
+    def test_items_dir_exists(self) -> None:
+        assert ITEMS_DIR.is_dir(), f"items dir not found: {ITEMS_DIR}"
+
+    def test_pool_nonempty(self) -> None:
+        assert len(_pool_items()) > 0, "item pool is empty"
 
     def test_all_items_marked_synthetic(self) -> None:
-        with open(SAMPLE_ITEMS_JSON, encoding="utf-8") as f:
-            data = json.load(f)
-        for item in data["items"]:
+        for item in _pool_items():
             assert item.get("SyntheticFlag") == "SYNTHETIC", (
                 f"Item {item.get('_id', '?')} must have SyntheticFlag=SYNTHETIC (D-SR11)"
             )
@@ -132,18 +144,14 @@ class TestSampleItemsFile:
             "ChoiceA", "ChoiceB", "ChoiceC", "ChoiceD", "ChoiceE",
             "CorrectChoice",
         }
-        with open(SAMPLE_ITEMS_JSON, encoding="utf-8") as f:
-            data = json.load(f)
-        for item in data["items"]:
+        for item in _pool_items():
             missing = required - item.keys()
             assert not missing, (
                 f"Item {item.get('_id', '?')} missing fields: {missing}"
             )
 
     def test_correct_choice_is_valid(self) -> None:
-        with open(SAMPLE_ITEMS_JSON, encoding="utf-8") as f:
-            data = json.load(f)
-        for item in data["items"]:
+        for item in _pool_items():
             assert item["CorrectChoice"] in ("A", "B", "C", "D", "E"), (
                 f"Item {item.get('_id', '?')} has invalid CorrectChoice: {item['CorrectChoice']!r}"
             )
@@ -151,30 +159,24 @@ class TestSampleItemsFile:
     def test_type_tags_are_valid(self) -> None:
         import re
         tag_re = re.compile(r"^type::[a-z0-9][a-z0-9\-]*$")
-        with open(SAMPLE_ITEMS_JSON, encoding="utf-8") as f:
-            data = json.load(f)
-        for item in data["items"]:
+        for item in _pool_items():
             tag = item.get("TypeTag", "")
             assert tag_re.match(tag), (
                 f"Item {item.get('_id', '?')} has invalid TypeTag: {tag!r}"
             )
 
     def test_source_contains_synthetic_label(self) -> None:
-        with open(SAMPLE_ITEMS_JSON, encoding="utf-8") as f:
-            data = json.load(f)
-        for item in data["items"]:
+        for item in _pool_items():
             assert "SYNTHETIC" in item.get("Source", ""), (
                 f"Item {item.get('_id', '?')} Source must include 'SYNTHETIC'"
             )
 
     def test_has_items_for_high_frequency_types(self) -> None:
         """Items for Flaw, Assumption, and Inference must be present (high-freq skills)."""
-        with open(SAMPLE_ITEMS_JSON, encoding="utf-8") as f:
-            data = json.load(f)
-        type_tags = {item["TypeTag"] for item in data["items"]}
-        assert "type::flaw" in type_tags, "No Flaw items in sample_items.json"
-        assert "type::assumption" in type_tags, "No Assumption items in sample_items.json"
-        assert "type::inference" in type_tags, "No Inference items in sample_items.json"
+        type_tags = {item["TypeTag"] for item in _pool_items()}
+        assert "type::flaw" in type_tags, "No Flaw items in the pool"
+        assert "type::assumption" in type_tags, "No Assumption items in the pool"
+        assert "type::inference" in type_tags, "No Inference items in the pool"
 
 
 # ---------------------------------------------------------------------------
@@ -252,11 +254,9 @@ class TestBuildDeckNotes:
     def test_item_notes_created(self, open_col) -> None:
         nt = open_col.models.by_name("LSAT Item")
         nids = open_col.models.nids(nt["id"])
-        with open(SAMPLE_ITEMS_JSON, encoding="utf-8") as f:
-            sample_data = json.load(f)
-        expected = len(sample_data["items"])
+        expected = len(_pool_items())
         assert len(nids) == expected, (
-            f"Expected {expected} LSAT Item notes (one per sample_items entry), "
+            f"Expected {expected} LSAT Item notes (one per pool entry), "
             f"got {len(nids)}"
         )
 
@@ -319,10 +319,10 @@ class TestBuildDeckCoverageReport:
 
 
 class TestSyntheticGuard:
-    """build_seed_deck must reject items missing SyntheticFlag (D-SR11)."""
+    """build_seed_deck must reject items with invalid SyntheticFlag (D-SR11)."""
 
     @anki_available
-    def test_rejects_item_without_synthetic_flag(self, tmp_col_path: str) -> None:
+    def test_rejects_item_with_invalid_synthetic_flag(self, tmp_col_path: str) -> None:
         import sys
         sys.path.insert(0, str(REPO_ROOT / "tools" / "speedrun" / "deck"))
         from build_seed_deck import build_seed_deck
@@ -331,7 +331,7 @@ class TestSyntheticGuard:
             "_disclaimer": "test",
             "items": [
                 {
-                    "SyntheticFlag": "REAL",  # should be rejected
+                    "SyntheticFlag": "BOGUS",
                     "TypeTag": "type::flaw",
                     "SkillTag": "skill::conclusion-id",
                     "TrapTag": "",

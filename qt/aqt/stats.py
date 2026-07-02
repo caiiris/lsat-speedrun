@@ -58,6 +58,13 @@ class NewDeckStats(QDialog):
             dyn=True,  # include filtered decks
         )
 
+        # Speedrun WP-27: the Speedrun stats view shows ALL study automatically
+        # (RangeBox forces collection scope when ?sr=1), so the deck picker here
+        # is a no-op — hide it to avoid a prominent, confusing dead control.
+        # Stock Anki (SPEEDRUN_SHELL=False) keeps the picker.
+        if aqt.main.SPEEDRUN_SHELL:
+            f.deckArea.setVisible(False)
+
         b = f.buttonBox.addButton(
             tr.statistics_save_pdf(), QDialogButtonBox.ButtonRole.ActionRole
         )

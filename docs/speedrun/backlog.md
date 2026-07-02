@@ -13,27 +13,33 @@
 > the AI feature roster, D-SR14), **not** here. This file is for non-decision
 > issues, debt, and known gaps.
 
-## Summary (2026-06-30)
+## Summary (2026-07-01)
 
 | Status | IDs |
 |---|---|
-| open | B001, B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B036, B038, B041, B042 |
+| open | B002, B005, B006, B007, B012, B013, B014, B017, B019, B020, B022, B023, B024, B025, B026, B027, B028, B029, B030, B032, B033, B041, B042, B043, B044, B045, B046, B047, B048, B049, B050, B051, B052 |
 | known-gap | B003, B004, B011, B015, B016, B018 |
-| fixed / done | B008, B009, B010, B021, B031, B034, B035, B037, B039, B040 |
+| fixed / done | B001, B008, B009, B010, B021, B031, B034, B035, B037, B039, B040, B036, B038, B053 |
 
 ---
 
 ### B001 — AnkiDroid build must rebuild the shared Rust backend for Android
 
-- **Type:** issue · **Status:** open · **Severity:** high
+- **Type:** issue · **Status:** done · **Severity:** high
 - **Discovered:** 2026-06-30 by Opus during iris-plan (spec-sync-mobile)
 - **Ref:** [`spec-sync-mobile.md`](./spec-sync-mobile.md) §9; D-SR7
 - **Context:** the engine change ships to the phone *only* after the Speedrun `rslib`
   is built into the AnkiDroid backend library and the fork builds on a device. The
   assignment explicitly warns teams that leave the mobile build late don't finish.
-- **Resolution (when closed):** a trivial shared-engine review loop running on a
-  real device/emulator **before** layering the engine change.
-- **Links:** D-SR7; blocks PRD AC 9.B.
+- **Resolution (2026-07-01, owner):** **WP-0b green on dev machine.** Stock AnkiDroid
+  builds + reviews on a Pixel 10 emulator (`~/dev/droid/Anki-Android`). Then
+  `Anki-Android-Backend` sibling checkout: `anki` submodule at `lsat-speedrun` @
+  `d9220b6b` (26.05 / Rust 1.92), NDK `29.0.14206865`, `./build.sh` →
+  `rsdroid-release.aar`, `local_backend=true` in `Anki-Android/local.properties` →
+  AnkiDroid runs on emulator with the custom backend. **Pitfall:** a Python venv for
+  `analogical-reasoning` exposed a script named `ar` on `PATH`, breaking
+  `tree-sitter` builds — fix: `export AR=/usr/bin/ar` before `./build.sh`.
+- **Links:** D-SR7; unblocks WP-8/10/15; PRD AC 9.B path open.
 
 ### B002 — Render-vs-answer decoupling is the one custom reviewer surface
 
@@ -46,6 +52,9 @@
   skill card with the standard `CardAnswer` — but it's the main place a careless
   change could break the answer flow. Must be honored in **both** the desktop
   (`qt/aqt/reviewer.py` + `ts/reviewer/`) and AnkiDroid reviewers.
+- **Update (2026-07-01, WP-8):** AnkiDroid path shipped — `SpeedrunReviewSession` calls
+  `drawItemForSkill`, renders drawn-item HTML, answers the skill card via `answerCard`.
+  Desktop still uses Python field injection (D-SR30). **Device verify pending.**
 - **Links:** D-SR3; relates B001.
 
 ### B003 — FSRS-as-skill scheduling: interval optimality unproven
@@ -105,7 +114,12 @@
   the engine either repeats items or marks the skill uncovered (feeding
   coverage/abstain). The bundled seed deck must meet the minimum for any demoed
   skill.
-- **Links:** relates B006; feeds the coverage gate (spec-measurement §5).
+- **Update (2026-07-01, Opus, D-SR38):** by **question type** the pool now clears the
+  production floor (all 13 `type::*` at ≥10, 151 items total). By **reasoning sub-skill**
+  it's still uneven — `skill::prephrase`=0, `skill::quantifier`=6 (< the production 10),
+  the rest ≥42. Type-axis repeats are no longer a demo risk; the skill-axis thinness is
+  carved out as **B043**.
+- **Links:** relates B006, B043, D-SR38; feeds the coverage gate (spec-measurement §5).
 
 ### B008 — Build env can't compile the engine: spaced repo path + no Rust toolchain
 
@@ -178,8 +192,10 @@
 - **Ref:** `docs/speedrun/data/weights.json`; spec-engine §9
 - **Context:** seed uses `MIN_POOL_SIZE_SEED=3` with 7 synthetic items → only 3/13 types covered at the production threshold (10). Real items (D-SR11) needed for real coverage.
 - **Update (2026-06-30, Opus):** `sample_items.json` expanded to **39 synthetic items (3 per all 13 `type::*`)** so seed coverage is now **13/13 at `MIN_POOL_SIZE_SEED=3`** — this makes Level-2 `draw_item_for_skill` work for every question type in the demo. Still **synthetic** and still below the production threshold of 10, so this does not close the gap; real items (D-SR11) remain required.
-- **Resolution:** recompute coverage vs production threshold once real items are imported; show per-skill pool sizes on the dashboard.
-- **Links:** B007, D-SR11.
+- **Update (2026-07-01, Opus, D-SR38):** pool migrated to per-type files under `tools/speedrun/deck/items/` and **expanded to 151 synthetic items — all 13 `type::*` now at ≥10**, so `build_seed_deck --min-pool 10` reports **13/13 (100%)** at the *production* threshold. **Gap still open:** these are synthetic placeholders, so this clears the *structural/count* threshold but not the *real-content* requirement — real items (D-SR11) are still needed before this is truly closed. Per-skill dashboard pool sizes still to do.
+- **Update (2026-07-01, Opus, D-SR39):** the **upload-your-own** side of D-SR11 now has a concrete tool — `import_prep_book.py` imports locally-owned prep-book items (`SyntheticFlag=REAL`, cited) into a **gitignored** `deck/imported/`, merged via `build_seed_deck --import`. This lets a user study real items locally, but does **not** close B015 for the *bundled* deck (imports are personal-use, never committed/shared). Bundled default stays synthetic.
+- **Resolution:** recompute coverage vs production threshold once **licensed, redistributable** real items are bundled; show per-skill pool sizes on the dashboard.
+- **Links:** B007, B043, D-SR11, D-SR38, **D-SR39**.
 
 ### B016 — Tooling / test-hygiene debt (anki import, models.add, media cleanup, plot test)
 
@@ -362,14 +378,24 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 - **Resolution (2026-07-01):** added `"speedrun_dashboard"` under StatsService in `exposed_backend_list`; verified `mediasrv` imports and `speedrunDashboard` is registered. **Lesson:** any new frontend-facing backend RPC must be added here.
 - **Links:** B034 (same chain — dashboard RPC never exercised over the web); WP-14/WP-20; feeds WP-24.
 
-### B036 — Session (WP-22) known limits: approximate targeted-drill filter + V3 prefetch state
+### B036 — Session (WP-22): targeted drill serves only 1 question + reviews not committed to revlog
 
-- **Type:** issue · **Status:** open · **Severity:** low
-- **Discovered:** 2026-07-01 by WP-22 build agent (inbox L3/L4)
-- **Ref:** `qt/aqt/speedrun_session.py`
-- **Context:** (1) the **targeted-drill skill filter** matches the exact `IdentityTag` and falls back to *all* skill cards if none match — sub-skill/variant items can be missed; (2) the session **pre-fetches a card-id queue**, so V3-scheduler states can mismatch for non-new cards (safe for the all-new seed deck; skips the FSRS update rather than crashing). Both are graceful-degradation v1 limits.
-- **Resolution:** tighten the skill filter (use the pool query from WP-3 / `tag:skill::S`) and re-fetch scheduler state per item before answering, once past the seed-deck demo.
-- **Links:** WP-22; D-SR35; relates WP-3 (selection), D-SR27.
+- **Type:** bug · **Status:** fixed (pending owner live-GUI verify) · **Severity:** high
+- **Discovered:** 2026-07-01 by WP-22 build agent (inbox L3/L4); **owner-confirmed symptoms 2026-07-01**
+- **Ref:** `qt/aqt/speedrun_session.py` (`_assemble_card_ids`, `_fetch_v3_states`, `_answer_current_card`)
+- **Context (original):** (1) the **targeted-drill skill filter** matches the exact `IdentityTag` and falls back to *all* skill cards if none match; (2) the session **pre-fetches a card-id queue**, so V3-scheduler states can mismatch for non-new cards (skips the FSRS update rather than crashing).
+- **Owner-observed (2026-07-01):** *"the Flaw family drill only lets you do one question, then returns to Home; and my progress isn't saved."* Root causes confirmed in code:
+  1. **One-question drill.** There is exactly **one `LSAT Skill` card per skill** (data contract: 38 skill notes). `_assemble_card_ids` for `targeted` returns *distinct skill cards* matching `IdentityTag:"type::flaw"` → **1 card** → `[:10]` → a single-question session. A targeted drill must instead **re-serve the same skill card N times**, calling `draw_item_for_skill` for a fresh item each rep (the app schedules the *skill*, not the item — D-SR3/B003).
+  2. **Reviews not saved.** `_answer_current_card` only calls `answer_card()` when `state.v3_states is not None`, and `_fetch_v3_states` only sets it when the skill card is the **top of `get_queued_cards()`**. When it isn't (card not due / not queue-top), the answer path is skipped → **nothing written to the revlog** → no FSRS update, card stays put, same item re-appears (compounded by the in-memory-only served sidecar, B025).
+- **Clarification for the owner's "progress not saved":** by design the app tracks progress at the **skill** level (the skill card's revlog history → Performance), **not per individual item** (D-SR4 / B003) — it never "remembers" a specific question as done. But right now even the skill-level review is being dropped (cause 2), so nothing accumulates.
+- **Resolution:** (a) targeted mode: loop the focus skill card up to `SESSION_SIZES["targeted"]`, drawing a fresh item + re-fetching scheduler state each rep; (b) commit reliably — re-fetch V3 states for the actual card immediately before `answer_card()` (don't depend on pre-fetched queue-top); (c) verify on live GUI (headless can't). Ties into ability-tracking (Performance/Readiness) actually receiving data.
+- **Fix (2026-07-01, Opus — `qt/aqt/speedrun_session.py`):**
+  1. `_assemble_card_ids` targeted branch now returns `[matched[i % len(matched)] for i in range(limit)]` — the single focus skill card repeated to the session size (10), so a targeted drill serves 10 questions (a fresh item drawn each rep). Mixed/timed unchanged (distinct cards by due).
+  2. `_fetch_v3_states` now uses `col._backend.get_scheduling_states(card_id)` (the legacy-answerCard path) instead of matching `get_queued_cards()` top — states are valid for any card, so every answer reaches `answer_card()` → a revlog row is written and Performance accrues. This also fixes commit reliability for mixed/timed.
+  3. `_load_current_item` calls `card.start_timer()` so `answer_card()`'s `time_taken()` is valid.
+  Added tests (`TestAssembleCardIdsTargetedRepeat`); 26 qt session tests + lint green. **Not yet GUI-verified** (headless can't drive the reviewer) — needs a `just run` drill pass.
+- **Known residual (separate from B036):** blind review re-serves the missed *skill card* and draws a **fresh** item, so it does not reproduce the exact missed item (per-item identity isn't stored — D-SR4/B003). Tracked as a follow-up, not part of this fix.
+- **Links:** WP-22; D-SR35; D-SR3/D-SR4/B003 (skill-level, not per-item); B025 (served sidecar); B044 (weak-skill/mistakes modes, unblocked by this); WP-3 (selection), D-SR27.
 
 ### B037 — Speedrun Home RPC 403: webview kind lacked API access
 
@@ -382,12 +408,12 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
 
 ### B038 — Home Memory card shows "No meta cards yet" despite 13 LSAT Meta cards
 
-- **Type:** bug · **Status:** open · **Severity:** low
+- **Type:** bug · **Status:** FIXED (2026-07-02, root cause = B053) · **Severity:** low → was actually the whole Home dashboard reading the wrong deck
 - **Discovered:** 2026-07-01 by owner (Home rendered; Memory card says "No meta cards yet")
-- **Ref:** `rslib/src/stats/measurement.rs` (`memory_score_impl` / `meta_cards_in_decks`), `SpeedrunDashboard` RPC; `ts/routes/speedrun-dashboard/SpeedrunDashboard.svelte`
-- **Context:** the profile's `LSAT Speedrun::Meta` deck has 13 Meta cards, but the Home's Memory card renders the empty state. Likely the `deck_id` passed to the dashboard doesn't include the Meta subdeck (deck-children handling), or `memory_score_impl` returns None when no reviews exist and the UI treats that as "no cards." Investigate: confirm the deck_id (parent vs subdeck) + whether Memory should show a 0-review state vs "no cards."
-- **Resolution:** confirm deck-children inclusion in the memory query; distinguish "no meta cards" from "meta cards exist but unreviewed" in the response/UI.
-- **Links:** D-SR29 (Memory), D-SR32 (dashboard RPC); WP-14/WP-20.
+- **Ref:** `qt/aqt/speedrun_home.py:_find_speedrun_deck_id`; `SpeedrunDashboard` RPC; `ts/routes/speedrun-dashboard/`
+- **Context:** the profile's `LSAT Speedrun::Meta` deck has 13 Meta cards, but the Home's Memory card rendered the empty state. **Root cause found (B053):** the guess in this entry ("the `deck_id` passed to the dashboard doesn't include the Meta subdeck") was correct — `_find_speedrun_deck_id` threw on a bad API call and **always returned `1` (Default deck)**, so the Home always queried Default (no meta cards, no skill revlog). Not a memory-query bug at all; the engine was fine.
+- **Resolution:** fixed by B053 (drop the invalid `decks.get_current()` call so the "LSAT Speedrun" loop actually runs). After the fix the Home resolves the root deck → Memory shows the real value. Verified independently: the running backend returns meta=13 for the root deck vs meta=0 for deck 1.
+- **Links:** **B053 (root cause + fix)**; D-SR29 (Memory), D-SR32 (dashboard RPC); WP-14/WP-20.
 
 ### B039 — Speedrun shell: expose Anki functions (Sync/Browse) inside the Home (nicety)
 
@@ -428,6 +454,113 @@ Note (2026-07-01): WP-21's redesign renamed/reworked the reviewer HTML; the WP-6
   - `--state-new/learn/review` tokens overridden (TodayStats numbers), card titles switched from Georgia serif → the drill's mono uppercase eyebrow treatment.
 - **Remaining:** calendar heatmap + the less-visible graphs (intervals, ease, difficulty, retrievability, stability, hourly, buttons, added, future-due) still use Anki's default d3 colors. Mostly empty on the demo deck; retheme the same way when polishing.
 - **Links:** WP-27; spec-ui §2.
+
+### B043 — Reasoning-sub-skill (`skill::`) pools uneven: `skill::prephrase`=0, `skill::quantifier`=6
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-07-01 by Opus during the D-SR38 content build-out
+- **Ref:** `tools/speedrun/deck/items/type-*.json` (`SkillTag`); [`taxonomy.json`](./data/taxonomy.json) SK04/SK05; [`weights.json`](./data/weights.json) `coverage_thresholds.min_pool_size_production=10`
+- **Context:** the 151-item pool clears the production floor on the **type** axis but not on every **skill** axis. Tally: `skill::conclusion-id`=70, `skill::causal`=70, `skill::abstraction`=47, `skill::conditional`=42, `skill::quantifier`=6, `skill::prephrase`=0. Two are below 10. `skill::prephrase` (SK04) is really a *study behavior* (predict-before-choices, D-SR34), not a property of a stimulus, so tagging items with it is debatable — decide whether it should ever be an item-level schedulable skill or only a drill-mode signal. `skill::quantifier` (SK05, all/most/some/none) is a genuine reasoning skill and just under-authored.
+- **Update (2026-07-01, Opus, D-SR39):** `skill::quantifier` **resolved** — authored 4 fresh synthetic all/most/some/none inference items (SYNTH-INFERENCE-014–017), pool now 155 items and `skill::quantifier` = **10** (at floor). `skill::prephrase`=0 still open, pending the ruling on whether it is item-taggable at all.
+- **Resolution:** (a) **still open** — rule on whether `skill::prephrase` is item-taggable or drill-only; (b) ~~author `skill::quantifier` items~~ **done** (D-SR39); (c) surface per-skill pool sizes on the dashboard (shared with B015).
+- **Links:** B007, B015, D-SR38, **D-SR39**, D-SR13, D-SR34.
+
+### B044 — Session-mode choice: "drill my weak skills" vs "review what I got wrong"
+
+- **Type:** issue (feature) · **Status:** open · **Severity:** low
+- **Discovered:** 2026-07-01 by owner ("shouldn't it drill what I'm bad at? or let me pick: practice what I got wrong vs what I'm bad at")
+- **Ref:** `qt/aqt/speedrun_home.py`, `qt/aqt/speedrun_session.py`, `rslib/src/stats/performance.rs` (`best_next_skill`), `ts/routes/speedrun-dashboard/SpeedrunDashboard.svelte` (`focusSkill`/`startTargetedDrill`)
+- **Context:** the owner expected adaptive "drill your weakest skill" and a choice between that and "review your mistakes."
+  - **"What I'm bad at"** already exists in design: "Today's focus" = `best_next_skill` = argmax `w_S·(1−Perf(S))·marginal` (D-SR9). It currently cold-starts on **Flaw** because with no revlog data every skill scores `w_S·1·1`, so the highest-frequency type wins. It cannot adapt until reviews are actually recorded → **blocked by B036** (answers not committed).
+  - **"What I got wrong"** exists only as **session-local blind review** (re-run this session's misses). No persistent cross-session mistakes bank. Per **D-SR4/B003** there is no per-item outcome store; FSRS already resurfaces skills you rate Again(1) sooner, but not specific questions.
+- **Resolution (proposal):** (a) surface an explicit mode toggle on Home — "Weakest skills" (adaptive, existing recommender) vs "Review misses"; (b) for "review misses" v1, drive it off the FSRS lapse/again queue at the skill level (no new schema, honors D-SR4) rather than a per-item store; (c) revisit a persistent per-item mistakes bank only if per-question review is truly wanted (would need a local, non-synced store — phase-2). Prereq: **B036** so Performance data exists to make "weakest" meaningful.
+- **Links:** B036 (prereq — reviews not saved), D-SR9 (next-best-thing), D-SR4/B003 (skill-level, not per-item), D-SR35 (session modes).
+
+### B045 — Add an easier "single-concept" drill tier beneath full practice items
+
+- **Type:** issue (feature) · **Status:** open · **Severity:** low
+- **Discovered:** 2026-07-01 by owner ("we should have easier single-concept-based drill questions in addition to these actual practice problems")
+- **Ref:** `docs/speedrun/data/notetypes.md` (`LSAT Meta` vs `LSAT Item`), spec-ui §3.2, `docs/speedrun/data/taxonomy.json` (axis-2 sub-skills)
+- **Context:** the current drill serves **full LR items** (stimulus + 5 choices). The owner wants a lighter tier that isolates **one concept/sub-skill** — e.g. "sufficient vs necessary," "spot the conclusion," "all/most/some inference," "name this flaw" — as quick atomic exercises for building fundamentals before full problems. This sits *between* the declarative `LSAT Meta` flashcards (pure vocab/definitions) and full `LSAT Item` practice: a micro-item that tests *applying* one sub-skill in isolation.
+- **Design questions:** (a) new notetype (`LSAT Concept`/`LSAT Micro`) vs reuse `LSAT Item` with a `Tier` field and shorter stems; (b) how it scores — feed the same skill's Performance, or a separate "fundamentals" track so it doesn't inflate exam-Performance; (c) authoring format + validator support; (d) surface: a "Fundamentals" session mode on Home, or scaffolding that fades as a skill's Performance rises (ties D-SR34 worked-example fading).
+- **Resolution (proposal):** spec a `micro`/`concept` tier (likely a `Tier: concept|full` field on `LSAT Item` to avoid a new notetype + zero schema change), author a small set per sub-skill, and add a "Fundamentals" drill mode; keep concept-tier outcomes on a separate display track initially so exam-Readiness stays full-item-based. Needs an owner decision before build.
+- **Links:** D-SR34 (scaffolding/fading), D-SR13 (taxonomy sub-skills), notetypes contract (D-SR38), B043 (skill-axis coverage).
+
+### B046 — Purpose-built Speedrun stats view (replace reskinned Anki graphs)
+
+- **Type:** issue (refactor/feature) · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-07-01 by owner + Opus — after four consecutive jargon spot-fixes on the reskinned Anki Statistics page (DI-SR1 steps 3–6: deck/collection → "this deck" → deck-picker button → removed deck controls entirely).
+- **Ref:** `ts/routes/graphs/` (reskinned Anki stats, WP-27/DI-SR1), `qt/aqt/stats.py`; the data source `SpeedrunDashboard` RPC (`rslib/src/stats/{performance.rs, measurement.rs}`, WP-14); `ts/routes/speedrun-dashboard/`.
+- **Context:** the "Statistics" surface is still fundamentally **Anki's** (decks, cards, reviews, ease, intervals, PDF export) reskinned to the Speedrun palette. Every term the owner hits reads as not-their-app (deck/collection, ease buttons, card counts), so it's been whack-a-mole to de-jargon piece by piece. The metrics a Speedrun learner actually cares about — **Memory / Performance / Readiness / per-skill map / timed-vs-untimed / calibration** — already exist via the `SpeedrunDashboard` RPC (WP-14) and are shown on Home, but there is no dedicated *deep* stats view built on them; "Stats" still routes to Anki's graphs.
+- **Resolution (proposal):** build a **Speedrun-native stats page** (new `ts/route`, driven by `SpeedrunDashboard` + a small history RPC) presenting: Performance trend per skill over time, Readiness trajectory toward the abstain gate, accuracy by question-type/trap, timed-vs-untimed and confidence-vs-correctness gaps, and coverage. Route the Home "Stats" action there instead of Anki's graphs (keep Anki's graphs reachable only as an "advanced/raw" link, or drop from the shell). Retire the reskin spot-fixes (DI-SR1) and **B042** once this lands. Needs a spec pass (which metrics/time-series, and what history the RPC must expose) before build.
+- **Links:** supersedes the ongoing DI-SR1 reskin approach; closes/absorbs **B042** (chart recolors) when done; builds on WP-14 (D-SR32 dashboard RPC), spec-measurement; relates B038 (Memory query), B036 (reviews must actually record for any of this to populate).
+
+### B047 — Built backend (`out/`) lags `HEAD`; proof artifacts must rebuild first
+
+- **Type:** issue · **Status:** open · **Severity:** medium
+- **Discovered:** 2026-07-01 by Opus while adding the Python end-to-end engine test (D-SR40)
+- **Ref:** `out/buildhash` (`f4fe85cc`) vs `git rev-parse HEAD` (`d9220b6b2`); `qt/tools/build_installer.py`; the Wednesday proof lane (WP-16/19)
+- **Context:** the checked-in build tree in `out/` was produced at commit `f4fe85cc`, but `main`/`HEAD` is `d9220b6b2` (later UX-reframe + Stats + content merges). Anything run against `out/pylib` / the built app — including the new `pylib/tests/test_speedrun_engine.py` and any **clean-build / install / demo recording** — is exercising a *stale* engine + Qt layer. The engine RPCs (WP-3/5) predate `f4fe85cc`, so the new test still passes, but a proof recording made now would not match the current source (and the installer bundles wheels built from `out/`).
+- **Resolution:** run a fresh `just build` (and `just wheels` before building the installer) so `out/buildhash == HEAD`, then capture the clean-build/test/install/phone recordings against that build. Ideally add a proof-lane step that asserts `out/buildhash == HEAD` before recording.
+- **Links:** D-SR40 (test runs against `out/`); B008 (build env); WP-9 installer; WP-16/WP-19 proof lane.
+
+### B048 — WP-9 demo-deck tooling is manual (no `just` recipe) + couples to the seed-builder function
+
+- **Type:** refactor · **Status:** open · **Severity:** low
+- **Discovered:** 2026-07-02 by Opus while adding `export_deck.py` (D-SR42)
+- **Ref:** `tools/speedrun/deck/export_deck.py`, `tools/speedrun/installer/{README.md, make_demo_deck.sh}`; `justfile`; `tools/speedrun/deck/build_seed_deck.py:build_seed_deck`
+- **Context:** the demo-deck export is only discoverable via the runbook + wrapper script — it was deliberately **not** wired into `justfile` to avoid editing a file other agents were mid-change on. It also imports `build_seed_deck.build_seed_deck()` directly, so a signature change there breaks the exporter (guarded by `test_export_deck.py`, but still coupling). The installer build itself is likewise driven by the upstream `./tools/build-installer` rather than a Speedrun `just` recipe.
+- **Resolution:** once the `justfile` churn settles, add `just speedrun-demo-deck` (+ maybe `just speedrun-installer`) recipes; consider a thin stable entry point in the deck package so the exporter isn't bound to the builder's internal signature.
+- **Links:** D-SR42; relates B023/B026 (tooling wiring), WP-9.
+
+### B049 — Installer ships "Anki" branding (bundle id / name / icon), not "Speedrun"
+
+- **Type:** issue · **Status:** open · **Severity:** low
+- **Discovered:** 2026-07-02 by Opus during the WP-9 installer runbook (D-SR42)
+- **Ref:** `qt/installer/app/pyproject.toml` (`formal_name = "Anki"`, `bundle = "net.ankiweb"`, `icon`, `description`)
+- **Context:** the Briefcase installer produces an app called **Anki** (bundle `net.ankiweb`, Anki icon), even though it launches into Speedrun Home. As an AGPL fork that's acceptable to hand in, but if Speedrun should present as its own product the installer metadata + icon need changing. Editing `pyproject.toml` (and adding a Speedrun icon) is cosmetic but changes the bundle id (a distinct app on disk) — decide before any real distribution.
+- **Resolution:** decide whether to rebrand for v1; if yes, set `formal_name`/`bundle`/`description` + add `resources/speedrun.{icns,ico,png}` and confirm the mac/windows templates pick them up. Keep as "Anki" for the Wednesday proof unless owner wants otherwise.
+- **Links:** D-SR42; WP-9; spec-ui §2 (Speedrun brand palette).
+
+### B050 — AnkiDroid: Speedrun scores scoped to Default deck + new-study-screen drill likely still blank
+
+- **Type:** issue · **Status:** done (2026-07-02, Opus) · **Severity:** medium
+- **Verdict:** both loose ends closed on the arm64 emulator. (1) `SpeedrunScoresActivity` now resolves the `LSAT Speedrun` deck (`decks.idForName("LSAT Speedrun")` → `startsWith` fallback → current), mirroring desktop `_find_speedrun_deck_id`; scores panel header reads "LSAT Speedrun" with 13 meta cards / 8 attempts instead of the empty Default. (2) Re-verified the drill under the **new study screen** (`newReviewerOptions` on): prephrase → reveal choices → commit → "Correct! You chose D" + per-choice rationale + Again/Hard/Good/Easy all render. **No guard needed** — `ReviewerViewModel` injects the drill via `eval` into the persistent WebView's `#qa`, which is already loaded, so it never hits the null-WebView path the legacy `Reviewer` did (that's why only the legacy path needed `recreateWebView()`). See DI-SR6.
+- **Discovered:** 2026-07-02 by Opus during on-emulator WP-8/WP-15 verification (DI-SR6)
+- **Ref:** `~/dev/droid/Anki-Android/AnkiDroid/.../speedrun/SpeedrunScoresActivity.kt`; `.../ui/windows/reviewer/ReviewerViewModel.kt`; `.../AbstractFlashcardViewer.kt` (`displaySpeedrunHtml`, fixed for legacy `Reviewer`)
+- **Context:** two loose ends found while verifying the drill on the arm64 emulator (the legacy-reviewer blank-card bug itself is **fixed** — DI-SR6):
+  1. **Scores deck scope.** `SpeedrunScoresActivity` calls `speedrunDashboard` for what resolves to the **Default** deck, so it reports "No LSAT Meta cards in this deck yet" / 0% even though the synced `LSAT Speedrun` deck has data. Desktop defaults to the Speedrun deck; mobile should target `LSAT Speedrun` (or the deck the user is studying), not Default.
+  2. **New study screen.** The blank-render fix (ensure the WebView is attached before loading custom HTML) was applied to the legacy `Reviewer` path only. The new-study-screen `ReviewerViewModel` drill path was **not** re-verified on device and likely needs the equivalent guard.
+- **Resolution:** point the scores activity at the `LSAT Speedrun` deck id (mirror desktop's default-deck resolution); re-verify the drill under the new study screen and add the same WebView-attach guarantee if it renders blank.
+- **Links:** DI-SR6 (legacy fix); WP-8/WP-15; D-SR41 (sync unblock that enabled the verify).
+
+### B051 — AnkiDroid legacy `Reviewer`: prephrase typing still hijacked by key-shortcuts
+
+- **Type:** issue / limitation · **Status:** open (won't-fix-soon) · **Severity:** low
+- **Discovered:** 2026-07-02 by Opus while fixing prephrase typing on the new study screen (DI-SR8).
+- **Context:** DI-SR8 fixed prephrase typing on the **new study screen** by exposing `ReviewerViewModel.isInputFocused` (set via the `focusin`/`focusout` posts from `ankidroid-reviewer.js`) and honoring it in `ReviewerFragment.dispatchKeyEvent`. The **legacy** `Reviewer`/`AbstractFlashcardViewer` has **no equivalent WebView-input focus signal** — `answerFieldIsFocused()` only checks the native type-answer `EditText`, and its WebView isn't set `isFocusableInTouchMode` for arbitrary inputs — so a keystroke in the Speedrun prephrase field on the legacy reviewer still fires a reviewer shortcut instead of typing.
+- **Resolution (deferred):** legacy reviewer is being superseded by the new study screen; steer mobile Speedrun users to `newReviewerOptions` (where type + scroll + full drill flow are verified) rather than porting the focus-signal plumbing into the deprecated path. Revisit only if the legacy reviewer must stay a supported Speedrun surface.
+- **Links:** DI-SR8; WP-8.
+
+### B052 — Local `User 1` profile now holds fabricated reviews; simulator is untested + couples to the dashboard field contract
+
+- **Type:** issue / tech-debt · **Status:** open · **Severity:** low
+- **Discovered:** 2026-07-02 by Opus (dashboard-demo simulator, D-SR43)
+- **Ref:** `tools/speedrun/deck/simulate_reviews.py`; `~/Library/Application Support/Anki2/User 1/collection.anki2` (+ `collection.anki2.bak-20260702-014813`); `out/speedrun-demo-reviewed.colpkg`
+- **Context:** to make the 3-score dashboard show real numbers on screen (D-SR43), the local `User 1` profile was populated in place with **fabricated** reviews (~250 `revlog` rows + FSRS `memory_state` on the 13 meta cards). Consequences: (1) it is **not real performance** — any proof recording made from this profile must be labelled a UI/measurement *demo*, not a genuine study session (relates B015); (2) a clean **cold-start / abstain** demo now requires restoring `collection.anki2.bak-<ts>` (or rebuilding the seed / making a fresh profile); (3) the simulator has **no test** and depends on both `build_seed_deck`'s signature (temp mode) and the dashboard's read contract (`revlog(cid,ease)` for `LSAT Skill`, `memory_state` for `LSAT Meta`) — a field/notetype rename would silently break it; (4) writes bypass undo and set `revlog.usn=0`, so they'd sync as-is if this profile is ever synced.
+- **Resolution:** to restore cold-start: `cp "collection.anki2.bak-20260702-014813" collection.anki2` in the profile dir (app closed). If the simulator becomes a kept tool, add a round-trip test (mirror `test_export_deck.py`) and a thin stable read-contract shared with the dashboard; otherwise treat as throwaway demo tooling. Also fixes the demo symptom of B038 (meta cards now have memory state → Memory card shows a value).
+- **Update (2026-07-02, Opus) — sync-conflict side effect (mitigated):** the direct `revlog`/card writes bump the collection's sync state, so on next launch the desktop app raised a **full-sync conflict dialog** ("choose which version to keep") against the self-hosted server (`customSyncUrl=http://127.0.0.1:8080/`, whose collection is empty), and the dashboard behind it rendered the cold-start empty state. **Data was never lost** — `lsof` confirmed the running app had the populated `User 1/collection.anki2` open, and a copy read meta=13 / attempts=259 / eligible=True with the app's own deck-picker (`_find_speedrun_deck_id` → root `LSAT Speedrun`). **Mitigation:** made a `collection.anki2.populated-bak-<ts>` backup and set the profile's `autoSync=False` (+`syncMedia=False`) in `prefs21.db` (pickled profile dict) so startup skips sync and opens straight to the populated Home. **Do not click "Download from AnkiWeb"** on that dialog — it would overwrite the local populated collection with the empty server copy; "Upload to AnkiWeb" (or Cancel) is safe. For a synced demo, resolve once via Upload.
+- **Update (2026-07-02, Opus) — DB corruption from a stale WAL sidecar (fixed):** after the first in-place run the app failed to open the profile with `DbError … DatabaseCorrupt … "database disk image is malformed"`. **Root cause:** a **stale `collection.anki2-shm` from a prior session (dated Jun 30)** was left in the profile dir; when the desktop app opened the collection it mis-recovered against that stale shared-memory file and corrupted the main db. (Raw `sqlite3` confirmed the post-crash `collection.anki2` was malformed; the `.bak` was intact — its `no such collation sequence: unicase` error is just raw sqlite lacking Anki's custom collation, **not** corruption.) **Fix / procedure that works:** (1) `rm -f collection.anki2 collection.anki2-shm collection.anki2-wal`; (2) restore the `.bak`; (3) re-run the simulator; (4) **`rm -f` any `-wal`/`-shm`** so the app opens a clean single file. Verified `pragma integrity_check = ok` + dashboard populated + no sidecars. **Lesson for the tool:** any in-place writer must ensure no stale/foreign `-wal`/`-shm` remain around the target db before the app opens; prefer operating on a copy or clearing sidecars post-close. pylib's own open/close leaves no sidecars, so the hazard is specifically *pre-existing* ones.
+- **Links:** D-SR43; relates B015 (synthetic content), B038 (Home Memory "no meta cards"), B048 (tooling not wired into `just`).
+
+### B053 — Home dashboard always queried the Default deck (`_find_speedrun_deck_id` threw → returned 1)
+
+- **Type:** bug · **Status:** FIXED (2026-07-02, Opus) · **Severity:** high (silently defeated the whole Home dashboard)
+- **Discovered:** 2026-07-02 by Opus while debugging why the populated dashboard rendered empty (D-SR43 demo)
+- **Ref:** `qt/aqt/speedrun_home.py:_find_speedrun_deck_id` (used by `main.py:_speedrunHomeState` → `speedrun-dashboard/<deck_id>`); cf. the correct copy in `qt/aqt/speedrun_session.py:_find_speedrun_deck_id`
+- **Context:** the Home version called `mw.col.decks.get_current()` **first**, but `DeckManager` has no `get_current()` (only `current()` / `get_current_id()`). The `AttributeError` was swallowed by the function's `except Exception: pass`, so it **always fell through to `return 1`** — the Home always loaded `speedrun-dashboard/1` (Default deck), which has no LSAT Skill revlog and no Meta cards → Memory "no meta cards", Performance 0%, Readiness abstain (0/200). It stayed invisible until now because the real `LSAT Speedrun` deck also had no review data (cold start looked identical to Default); populating it (D-SR43) exposed the bug. Proven live: DevTools showed the webview at `/speedrun-dashboard/1`, and a direct backend query returned meta=13/attempts=259 for the root deck vs meta=0/attempts=0 for deck 1. The `speedrun_session.py` twin was unaffected (it runs the name-match loop **before** the bad call).
+- **Resolution:** removed the pre-loop `get_current()` call; the function now runs the `startswith("LSAT Speedrun")` loop first and falls back to `get_current_id()`. Fix is source-only Python (`run.py` loads source `qt/` ahead of `out/qt`), so it applies on next app launch — **no rebuild needed**, just restart. This also fixes **B038**.
+- **Links:** fixes B038; surfaced by D-SR43; relates WP-20 (Home), WP-14 (dashboard RPC).
 
 ---
 

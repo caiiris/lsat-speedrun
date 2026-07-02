@@ -427,6 +427,7 @@ Honesty invariants (D-SR10, spec-measurement §6):
     WP-22 SEAM: these buttons emit bridge commands handled by SpeedrunHomeDialog.
     Replace with SvelteKit route navigation once ts/routes/speedrun-session/ exists.
     -->
+    <p class="sr-launchers-label">Or choose a session</p>
     <section class="sr-launchers" aria-label="Choose a session">
         <button
             class="sr-launcher"
@@ -580,6 +581,10 @@ Honesty invariants (D-SR10, spec-measurement §6):
         background: $bg;
         min-height: 100vh;
         padding: 0 0 3em;
+        // Flex column so the "stats" sections can be ordered below the actions
+        // (Today's focus + session launchers) without moving the markup.
+        display: flex;
+        flex-direction: column;
     }
 
     // ── Header ────────────────────────────────────────────────────────────────
@@ -733,6 +738,7 @@ Honesty invariants (D-SR10, spec-measurement §6):
     // ── Score cards ───────────────────────────────────────────────────────────
 
     .sr-score-row {
+        order: 4;  // below Today's focus + session launchers (actions-first home)
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 1em;
@@ -997,17 +1003,37 @@ Honesty invariants (D-SR10, spec-measurement §6):
         font-family: $grotesk;
         font-size: 0.9em;
         color: $ink;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        box-shadow: 0 1px 2px rgba(27, 36, 48, 0.06);
+        transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 
         &:hover {
             border-color: $indigo;
-            box-shadow: 0 0 0 3px $indigo-light;
+            box-shadow: 0 4px 14px rgba(62, 58, 140, 0.16);
+            transform: translateY(-2px);
+        }
+
+        &:hover .sr-launcher-arrow {
+            transform: translateX(3px);
+        }
+
+        &:active {
+            transform: translateY(0);
         }
 
         &:focus-visible {
             outline: 3px solid $amber;
             outline-offset: 2px;
         }
+    }
+
+    .sr-launchers-label {
+        margin: 0.4em 0 0.1em;
+        padding: 0 2em;
+        font-size: 0.78em;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: $muted;
     }
 
     .sr-launcher-icon {
@@ -1050,10 +1076,12 @@ Honesty invariants (D-SR10, spec-measurement §6):
     }
 
     .sr-launcher-arrow {
-        color: $muted;
-        font-size: 1.1em;
+        color: $indigo;
+        font-size: 1.2em;
+        font-weight: 700;
         margin-left: auto;
         align-self: center;
+        transition: transform 0.15s;
     }
 
     .sr-eye-slash {
@@ -1064,6 +1092,7 @@ Honesty invariants (D-SR10, spec-measurement §6):
     // ── Skill map ─────────────────────────────────────────────────────────────
 
     .sr-skillmap {
+        order: 5;  // stats sit at the bottom, after the score cards
         margin: 0 2em;
         background: $surface;
         border: 1px solid $border;

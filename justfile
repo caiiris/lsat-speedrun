@@ -14,6 +14,10 @@ build:
 run *args:
     {{ run_script }} {{ args }}
 
+# Speedrun WP-10: self-hosted anki-sync-server (spec-sync-mobile §9)
+sync-server:
+    ./tools/speedrun/sync/start_sync_server.sh
+
 # Build and run Anki in optimized (release) mode
 run-optimized *args:
     {{ if os() == "windows" { "$env:RELEASE='1'; .\\run.bat" } else { "RELEASE=1 ./run" } }} {{ args }}

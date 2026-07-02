@@ -32,22 +32,22 @@
 
 | WP | Title | Phase | Lane | Status |
 |---|---|---|---|---|
-| WP-0 | Fork + dual-platform build spine | 0 | Infra | WP-0a desktop ✅ (B008) · WP-0b mobile pending (B001) |
-| WP-1 | Taxonomy + notetypes + seed deck (+weights) | 0 | Content | offline landed ✅ (tests green; real items pending B015) |
+| WP-0 | Fork + dual-platform build spine | 0 | Infra | WP-0a desktop ✅ (B008) · WP-0b mobile ✅ (B001) |
+| WP-1 | Taxonomy + notetypes + seed deck (+weights) | 0 | Content | offline landed ✅ (tests green; pool now 151 items, 13/13 types at production floor via per-type files + `item_validator.py`, D-SR38; **real** items pending B015, skill-axis pending B043) |
 | WP-2 | Protobuf interface contract | 0 | Contracts | landed ✅ (proto + stubs; bindings regen in Rust/Py/TS; builds green) |
-| WP-3 | Fresh-item selection (`draw_item_for_skill`) | 1 | Engine | landed ✅ (merged to main; 7 unit tests; difficulty deferred B024, sidecar B025) |
+| WP-3 | Fresh-item selection (`draw_item_for_skill`) | 1 | Engine | landed ✅ (merged to main; 7 Rust unit tests + Python end-to-end test `pylib/tests/test_speedrun_engine.py`; difficulty deferred B024, sidecar B025) |
 | WP-4 | Interleaving order (`ReviewCardOrder` variant) | 1 | Engine | landed ✅ (merged; 4 unit tests; deck-options toggle) |
-| WP-5 | Mastery query (`skill_mastery`) | 1 | Engine | landed ✅ (merged; 3 unit tests; threshold 0.90 D-SR28) |
+| WP-5 | Mastery query (`skill_mastery`) | 1 | Engine | landed ✅ (merged; 3 Rust unit tests + Python end-to-end test `pylib/tests/test_speedrun_engine.py`; threshold 0.90 D-SR28) |
 | WP-6 | Desktop reviewer (commit-then-reveal + draw) | 1 | Desktop-Reviewer | landed ✅ (merged; L1 done 35 tests; L2 wired — needs live-GUI verify; render via Python injection D-SR30) |
 | WP-7 | Memory score + give-up gate | 1 | Measurement | landed ✅ (merged; readiness_gate + Memory, 13 tests; Python exposure → WP-14 B031) |
-| WP-8 | AnkiDroid review loop | 1 | Mobile | not started |
-| WP-9 | Desktop installer (clean machine) | 1 | Packaging | not started |
-| WP-10 | Self-hosted sync + conflict/offline tests | 2 | Sync | not started |
+| WP-8 | AnkiDroid review loop | 1 | Mobile | done ✅ |
+| WP-9 | Desktop installer (clean machine) | 1 | Packaging | in-progress (runbook + demo-deck export tooling landed: `tools/speedrun/installer/`; installer build itself + clean-machine recording pending; B047) |
+| WP-10 | Self-hosted sync + conflict/offline tests | 2 | Sync | done ✅ (harness; human device verify) |
 | WP-11 | AI tagging (anchor eval + baselines) | 2 | AI | offline landed ✅ (stub LLM; real model pending B012/B018) |
 | WP-12 | AI-card-check + injection guard | 2 | AI | offline landed ✅ (stub LLM; real model pending B012) |
 | WP-13 | AI-off mode wiring | 2 | AI | not started |
 | WP-14 | Performance + Readiness + dashboard | 2 | Measurement | landed ✅ (merged; Wilson Perf + abstain-gated Readiness + `SpeedrunDashboard` RPC + ts route; 10 tests; resolves B031; UI minimal B032) |
-| WP-15 | Mobile two-way sync + scores on phone | 2 | Mobile | not started |
+| WP-15 | Mobile two-way sync + scores on phone | 2 | Mobile | done ✅ (scores UI; sync = stock + docs) |
 | WP-16 | Proof evals (calibration/paraphrase/leakage) | 3 | Evals | offline harnesses landed ✅ (wiring gaps B013/B014) |
 | WP-17 | Interleaving ablation (3 builds) | 3 | Study-feature | not started |
 | WP-18 | One-command benchmark + perf targets | 3 | Bench | not started |
@@ -248,7 +248,7 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 # Phase 0 — Foundation & contracts
 
 ### WP-0 — Fork + dual-platform build spine
-- **Lane:** Infra · **Depends on:** — · **Status:** not started
+- **Lane:** Infra · **Depends on:** — · **Status:** landed ✅ (WP-0a B008 · WP-0b B001, 2026-07-01)
 - **Goal:** Fork Anki (AGPL, credit upstream). Build desktop from source (`just run`) and prove a *trivial* Rust change shows end-to-end. Get the **AnkiDroid fork building** with the shared Rust backend and running a review loop on a device/emulator.
 - **Contract (owns):** the buildable repo + a green "trivial Rust change visible" sanity path on both platforms.
 - **Touches:** repo root, build tooling; AnkiDroid fork repo.
@@ -257,7 +257,7 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 - **Parallel-safe with:** WP-1 (once forked). *Two sub-tracks: desktop-build ‖ AnkiDroid-build.*
 
 ### WP-1 — Taxonomy + notetypes + seed deck (+ weights/conversion)
-- **Lane:** Content · **Depends on:** WP-0 (repo) · **Status:** not started
+- **Lane:** Content · **Depends on:** WP-0 (repo) · **Status:** landed ✅ (offline; deck tests green). Item pool restructured to per-type files `tools/speedrun/deck/items/type-*.json` + a deterministic no-AI `item_validator.py`, expanded to **151 synthetic items with all 13 `type::*` at the production floor of 10** (`build_seed_deck --min-pool 10` → 13/13). Real items still gated on B015 (D-SR11); `skill::` axis uneven → B043. See D-SR38.
 - **Goal:** Encode the PowerScore taxonomy as the **tag scheme** (axis-1 question types, axis-2 sub-skills, trap catalog — D-SR13). Define the 3 notetypes **LSAT Meta / LSAT Skill / LSAT Item** (fields per spec-engine §7). Build a **cited seed deck**: skill notes (1 per skill/trap), a tagged + suspended item pool meeting per-skill min sizes ([B007]), meta cards. Compile the **exam-frequency weights** + a cited **raw→scaled conversion table** for Readiness.
 - **Contract (owns):** the data contract every lane codes against (tag names, notetype field order, deck layout, weights). Document it in a short header in the deck/import or a `data-contract` note.
 - **Touches:** content/import files; no engine code.
@@ -312,15 +312,20 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 - **Parallel-safe with:** reviewer, mobile, engine.
 
 ### WP-8 — AnkiDroid review loop
-- **Lane:** Mobile · **Depends on:** WP-0 (Android build), WP-1; WP-3 (Level 2) · **Status:** not started
+- **Lane:** Mobile · **Depends on:** WP-0 (Android build), WP-1; WP-3 (Level 2) · **Status:** done ✅ (2026-07-01; `SpeedrunHtml.kt` + `SpeedrunReviewSession.kt` + legacy `Reviewer.kt` + new study screen hooks; `Scheduler.drawItemForSkill` in libanki)
 - **Goal:** Load the exam deck and run a real review session on the shared engine; port commit-then-reveal + drawn-item to AnkiDroid's review UI. (Wednesday: same-deck review; two-way sync not yet.)
 - **Touches:** AnkiDroid fork review UI.
 - **Acceptance:** spec-sync-mobile §7 (review loop); PRD Wednesday mobile.
 - **Parallel-safe with:** WP-6.
 
 ### WP-9 — Desktop installer (clean machine)
-- **Lane:** Packaging · **Depends on:** WP-0 · **Status:** not started
+- **Lane:** Packaging · **Depends on:** WP-0 · **Status:** in-progress (2026-07-02)
 - **Goal:** Produce a desktop installer that runs on a clean machine (Anki's `qt/installer` tooling).
+- **Landed (additive tooling, no build-system/app edits):**
+  - `tools/speedrun/installer/README.md` — the WP-9 runbook: rebuild-to-HEAD (B047) → `just wheels` → `./tools/build-installer` (= `RELEASE=2 ./ninja installer`) → demo deck → clean-machine verify checklist (incl. macOS adhoc-sign / Gatekeeper step).
+  - `tools/speedrun/deck/export_deck.py` + `tools/speedrun/installer/make_demo_deck.sh` — export the seed deck as one importable `.apkg`/`.colpkg` so a fresh (empty) profile can load the exam deck in one File→Import. Verified round-trip: import into an empty collection → 214 cards (38 skill + 163 item + 13 meta) + all 4 `LSAT Speedrun` decks.
+  - Confirmed the packaged app opens into Speedrun Home automatically (`SPEEDRUN_SHELL=True` default in `qt/aqt/main.py`) — no env var needed; installer bundles the `anki`+`aqt` wheels so the engine change + UI ship as-is.
+- **Still to do:** run `./tools/build-installer` on a fresh build, verify the `.dmg` on a clean machine (no toolchain), and capture the clean-build + install + review recordings. Optional: Speedrun branding (`qt/installer/app/pyproject.toml`), real signing (`SIGN_IDENTITY`).
 - **Acceptance:** PRD §9.F; Wednesday "clean-machine install" proof.
 - **Parallel-safe with:** all (packaging lane).
 
@@ -329,7 +334,7 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 # Phase 2 — Friday: AI + two-way sync + full dashboard
 
 ### WP-10 — Self-hosted sync + conflict/offline tests
-- **Lane:** Sync · **Depends on:** WP-0, WP-8 · **Status:** not started
+- **Lane:** Sync · **Depends on:** WP-0, WP-8 · **Status:** done ✅ (2026-07-01; `just sync-server` + `tools/speedrun/sync/` harness; human: point desktop + AnkiDroid at server)
 - **Goal:** One-command bring-up of `anki-sync-server`; point both apps at it; run the **7b sync test** (10+10, none lost/double) and the same-card **conflict** + **offline-then-merge** cases.
 - **Touches:** deployment config/docs; uses `rslib/sync` as-is.
 - **Acceptance:** spec-sync-mobile AC 1–3,5; PRD AC 9.B; D-SR8.
@@ -364,7 +369,7 @@ How to read each WP for parallel execution by **Sonnet 4.6** (`claude-4.6-sonnet
 - **Parallel-safe with:** Sync, AI.
 
 ### WP-15 — Mobile two-way sync + scores on phone
-- **Lane:** Mobile · **Depends on:** WP-10, WP-14, WP-8 · **Status:** not started
+- **Lane:** Mobile · **Depends on:** WP-10, WP-14, WP-8 · **Status:** done ✅ (2026-07-01; `SpeedrunScoresActivity` + deck-picker menu; two-way sync via stock AnkiDroid + `tools/speedrun/sync/README.md`)
 - **Goal:** AnkiDroid two-way sync working; render the three scores + abstain panel on mobile (same gate/rules).
 - **Touches:** AnkiDroid fork (sync UI + dashboard).
 - **Acceptance:** spec-sync-mobile AC 1–2,7; PRD AC 9.B/9.C on phone.

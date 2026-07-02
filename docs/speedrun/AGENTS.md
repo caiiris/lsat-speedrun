@@ -10,7 +10,9 @@
 > The plan (PRD + 4 specs + decision log) is verified to integrate with **zero schema
 > change** and split into a phased build plan ([`build-plan.md`](./build-plan.md), WP-0…WP-19).
 > **Built so far** (all additive, tests green): Wave-1 offline tooling — WP-1 data contract
-> (`docs/speedrun/data/` + `tools/speedrun/deck/`), WP-11 AI tagging (`tools/speedrun/tagging/`),
+> (`docs/speedrun/data/` + `tools/speedrun/deck/`; item pool now **151 synthetic items in per-type
+> files, all 13 `type::*` at the production floor of 10**, guarded by a deterministic no-AI
+> `item_validator.py` — D-SR38), WP-11 AI tagging (`tools/speedrun/tagging/`),
 > WP-12 AI card-check (`tools/speedrun/cardcheck/`), WP-16 eval harnesses (`tools/speedrun/eval/`).
 > **The build env is now unblocked** ([B008](./backlog.md)
 > resolved): space-free path, Rust 1.92, `out/` build == HEAD, `anki` v26.05 imports, and the
@@ -23,8 +25,10 @@
 > (abstain-gated) + the **3-score dashboard** (`ts/routes/speedrun-dashboard/`) via the
 > `SpeedrunDashboard` RPC — all additive, zero schema change, FSRS + answer path reused. **The
 > desktop app now runs the full loop and shows the scored dashboard** (a demo seed deck is in the
-> local profile). **Next: WP-0b (AnkiDroid build — dev's machine, [B001](./backlog.md)), WP-10
-> (sync), the Friday AI wiring (WP-13), and the proof lane (WP-16/17/18).**
+> local profile). **WP-0b (AnkiDroid + shared backend on emulator) is green** ([B001](./backlog.md)
+> done, 2026-07-01). **WP-8/10/15 landed** (AnkiDroid commit-then-reveal + sync harness + mobile
+> scores). **Next:** owner device verify (sync + drill on phone), AI wiring (WP-13), proof lane
+> (WP-16/17/18).**
 >
 > This is the **Speedrun project's** front door. It is *not* the repo-root
 > `AGENTS.md` (that's upstream Anki's build doc → `CLAUDE.md`).
@@ -33,7 +37,7 @@
 
 1. **This file** — current project state + the override ledger.
 2. **Decision log** [`decisions.md`](./decisions.md) — latest non-superseded entry wins.
-3. **Iterations log** [`design-iterations.md`](./design-iterations.md) — feedback-/test-driven surface changes (next free: **DI-SR2**).
+3. **Iterations log** [`design-iterations.md`](./design-iterations.md) — feedback-/test-driven surface changes (next free: **DI-SR14**).
 4. **PRD / specs** — *original intent, written before implementation* ([`prd-speedrun.md`](./prd-speedrun.md), `spec-*.md`). **Frozen.** Superseded wherever a later decision or an "Overrides" entry below says so. **When a spec and a decision conflict, the decision wins — do not defer to the PRD.**
 
 ## Overrides since the plan
@@ -58,14 +62,14 @@ _Newest first._
 | Path | What |
 |---|---|
 | [`prd-speedrun.md`](./prd-speedrun.md) | User-facing contract: the 3 scores, honesty/give-up rules, ACs, edge-cases |
-| [`decisions.md`](./decisions.md) | Decision log D-SR1…37 (append-only; **next free ID: D-SR38**) |
+| [`decisions.md`](./decisions.md) | Decision log D-SR1…44 (append-only; **next free ID: D-SR45**) |
 | [`spec-engine.md`](./spec-engine.md) | The Rust change: skill-as-card interleaving + fresh-item draw, mastery query, data model |
 | [`spec-measurement.md`](./spec-measurement.md) | Memory/Performance/Readiness models, the give-up gate, evals |
 | [`spec-ui.md`](./spec-ui.md) | **Presentation/UX (living):** study-plan surface + the LR drill interaction (reframe away from Anki decks/flashcards) — D-SR33/34 |
 | [`spec-sync-mobile.md`](./spec-sync-mobile.md) | Self-hosted sync, conflict rule, AnkiDroid companion |
 | [`spec-ai.md`](./spec-ai.md) | AI honesty contract, anchor tagging eval, card-check, injection guard |
 | [`build-plan.md`](./build-plan.md) | Dispatcher output: work packages WP-0…WP-19, phases, deps, parallel lanes |
-| [`design-iterations.md`](./design-iterations.md) | Feedback-/test-driven surface changes (DI-SR1…; **next free: DI-SR2**) |
+| [`design-iterations.md`](./design-iterations.md) | Feedback-/test-driven surface changes (DI-SR1…13; **next free: DI-SR14**) |
 | [`backlog.md`](./backlog.md) | Known gaps / risks / open issues (B001…) |
 | [`../lsat-speedrun-brainlift.md`](../lsat-speedrun-brainlift.md) | Research grounding (pedagogy, psychometrics, AI) |
 | [`../../extra/architecture/ANKI_ARCHITECTURE.md`](../../extra/architecture/ANKI_ARCHITECTURE.md) | How the upstream Anki engine works (git-ignored) |
@@ -74,7 +78,7 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 
 ## Conventions that bite
 
-- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR38**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B043**).
+- **IDs:** decisions are `D-SR<N>`, stable, **append-only — supersede, never rewrite** (next free: **D-SR45**). Backlog is `B<NNN>`, monotonic, never reused (next free: **B054**).
 - **Frozen docs:** the PRD + specs are one-and-done. Don't edit them to track drift — record changes as a **new decision** + an **Overrides** line here.
 - **Engine invariants** (don't break these — they're the project's whole thesis + grade):
   - **Zero schema change.** Ride existing tables + `Card.custom_data`/tags; no schema-version bump (keeps sync/downgrade/`dbcheck` safe and upstream rebases cheap). [D-SR4]
@@ -90,7 +94,11 @@ Upstream code the change lands in: `rslib/src/scheduler/`, `rslib/src/stats/`, `
 dashboard** are all merged to `main`; combined `just build` + `just test-rust` + `just test-py` +
 `just test-ts` are green. **The desktop app runs the full interleaved commit-then-reveal loop and
 shows the scored dashboard** (Memory / Performance / Readiness-or-Abstain) — a demo seed deck is in
-the local profile (`User 1`; synthetic + thin coverage, so Readiness will honestly abstain).
+the local profile (`User 1`). **As of 2026-07-02 that profile is seeded with a *fabricated* study
+history (D-SR43, `tools/speedrun/deck/simulate_reviews.py`) so the dashboard shows populated numbers
+on screen — Memory ≈92% [90–94%], Performance ≈70%, Readiness 165 [153–175]** (demo data, not real;
+restore `collection.anki2.bak-<ts>` for a clean cold-start/abstain demo — B052). A shareable
+`out/speedrun-demo-reviewed.colpkg` carries the same populated state (import into a fresh profile).
 **Active direction — UX reframe (D-SR33/D-SR34, [`spec-ui.md`](./spec-ui.md)):** the Anki
 deck/flashcard surface reads wrong for a reasoning exam, so we are reframing the presentation into
 an **LSAT study-plan + practice-session app** (home = dashboard/study-plan; drills / timed sections /
@@ -106,19 +114,32 @@ main-window state in `mw.web`, not a dialog → exactly one window, closing it q
 **Desktop app is now a single-window, self-contained Speedrun product** (pending owner GUI-verify). The Home renders + matches the mockup (its earlier "blank/awful" was
 three GUI-only bugs B034/B035/B037, all fixed). **Desktop UX reframe is functionally complete — pending
 owner GUI-verify.** Open polish: B033 (reasoning-map/marked-conclusion field), B036 (session filter/state),
-B038 (Home Memory "no meta cards"), B039 (Sync/Browse button in shell).
+B039 (Sync/Browse button in shell). **B038 fixed (2026-07-02, B053):** the Home always queried the
+Default deck because `_find_speedrun_deck_id` called a non-existent `decks.get_current()` and fell
+through to `return 1` — so the whole 3-score dashboard read the wrong (empty) deck. Fixed source-side
+(restart to apply, no rebuild).
 
-**Also next:** **WP-0b (AnkiDroid build)** — #1 risk, dev's machine ([B001](./backlog.md)) —
-**WP-10 (sync)**, AI wiring (WP-13; AI available **Wed night** per current constraint), proof lane
+**Also next:** owner **device verify** — AnkiDroid Speedrun drill + self-hosted sync + scores panel;
+AI wiring (WP-13; AI available **Wed night** per current constraint), proof lane
 (WP-16/17/18). **Verify on device:** WP-6 Level-2 live-GUI pass. Deadlines: **Wed** core · **Fri**
 AI + sync · **Sun** prove + ship. *(`main` is ahead of `origin/main` by local merges — push when ready.)*
 
-**Resolved this round:** **WP-14 landed** → promoted **D-SR31** (revlog ease→outcome mapping,
-resolves the ease half of B014) + **D-SR32** (Readiness band/confidence/coverage method + combined
-`SpeedrunDashboard` RPC); **B031 fixed** (Memory now exposed to Python). **New backlog:** B032
-(dashboard UI minimal — deck-picker/i18n/polish deferred). **Earlier:** WP-6/7 (→D-SR29/30,
-B027–B030), WP-3/4/5 (→D-SR27/28), B008/WP-2. **Still open:** B013 (`variant_of`) · B012 (real-LLM —
-Friday) · B001 (mobile) · B023/B026 (fmt/lint debt) · B014 (`split.py`) · WP-6 GUI verification.
+**Mobile Home + sessions (2026-07-02):** the AnkiDroid "Speedrun scores" screen was redesigned from a
+plain TextView dump into a WebView dashboard mirroring the desktop Home (DI-SR12), given a working
+**Start drill** button (opens the reviewer on `LSAT Speedrun::Skills`), and then a full **mobile session
+layer** — `SpeedrunSessionActivity` porting the desktop `SpeedrunSessionDialog` (mixed/timed/blind:
+bounded queue, progress/timer header, scored result screen with donut + trap-chip slips + flag stars,
+blind-review restart) — **D-SR44 / DI-SR13**, verified end-to-end on the emulator. Unported: the
+**targeted** (per-skill) session on mobile.
+
+**Resolved this round:** **WP-8/10/15** (2026-07-01) — AnkiDroid `SpeedrunHtml`/`SpeedrunReviewSession`
++ libanki `drawItemForSkill`/`speedrunDashboard`; `just sync-server` + `tools/speedrun/sync/sync_test.py`;
+`SpeedrunScoresActivity` on deck picker. **WP-0b / B001 done** (2026-07-01) — stock AnkiDroid + custom
+`lsat-speedrun` backend (`d9220b6b`) run on Pixel 10 emulator;
+`~/dev/droid/{Anki-Android,Anki-Android-Backend}`, `local_backend=true`. **Earlier:** WP-14 landed
+(→D-SR31/32, B031 fixed), WP-6/7 (→D-SR29/30, B027–B030), WP-3/4/5 (→D-SR27/28), B008/WP-2.
+**Still open:** B013 (`variant_of`) · B012 (real-LLM — Friday) · B023/B026 (fmt/lint debt) ·
+B014 (`split.py`) · WP-6 GUI verification · B002 (partially addressed by WP-8 mobile path; verify on device).
 
 ---
 

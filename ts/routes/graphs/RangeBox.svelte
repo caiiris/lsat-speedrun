@@ -20,6 +20,14 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
     export let days: Writable<number>;
     export let search: Writable<string>;
 
+    // Speedrun WP-27: when opened from the shell (?sr=1), the deck/collection
+    // scope toggle is meaningless — Speedrun is effectively one study plan, and
+    // "deck:current" can even scope to an empty "Default" deck (→ no data). So
+    // we hide the toggle + search box and always show all of the user's study.
+    const isSpeedrun =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).has("sr");
+
     let revlogRange = daysToRevlogRange($days);
     let searchRange: SearchRange;
 
@@ -29,6 +37,11 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
         searchRange = SearchRange.Collection;
     } else {
         searchRange = SearchRange.Custom;
+    }
+
+    if (isSpeedrun) {
+        // Show everything the learner has studied, regardless of selected deck.
+        searchRange = SearchRange.Collection;
     }
 
     let displayedSearch = $search;
@@ -60,42 +73,46 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
     }
 
     const year = tr.statisticsRange1YearHistory();
-    const deck = tr.statisticsRangeDeck();
-    const collection = tr.statisticsRangeCollection();
     const searchLabel = tr.statisticsRangeSearch();
     const all = tr.statisticsRangeAllHistory();
+    const deck = tr.statisticsRangeDeck();
+    const collection = tr.statisticsRangeCollection();
 </script>
 
 <div class="range-box">
     <div class="spin" class:loading>◐</div>
 
-    <InputBox>
-        <label>
-            <input type="radio" bind:group={searchRange} value={SearchRange.Deck} />
-            {deck}
-        </label>
-        <label>
-            <input
-                type="radio"
-                bind:group={searchRange}
-                value={SearchRange.Collection}
-            />
-            {collection}
-        </label>
+    <!-- Speedrun hides the deck/collection scope toggle + search box (jargon,
+         and meaningless for a single study plan); stock Anki keeps them. -->
+    {#if !isSpeedrun}
+        <InputBox>
+            <label>
+                <input type="radio" bind:group={searchRange} value={SearchRange.Deck} />
+                {deck}
+            </label>
+            <label>
+                <input
+                    type="radio"
+                    bind:group={searchRange}
+                    value={SearchRange.Collection}
+                />
+                {collection}
+            </label>
 
-        <!-- This form is an external API and care should be taken when changed -
+            <!-- This form is an external API and care should be taken when changed -
 	other clients e.g. AnkiDroid programmatically update this form by id -->
-        <input
-            type="text"
-            id="statisticsSearchText"
-            bind:value={displayedSearch}
-            on:change={updateSearch}
-            on:focus={() => {
-                searchRange = SearchRange.Custom;
-            }}
-            placeholder={searchLabel}
-        />
-    </InputBox>
+            <input
+                type="text"
+                id="statisticsSearchText"
+                bind:value={displayedSearch}
+                on:change={updateSearch}
+                on:focus={() => {
+                    searchRange = SearchRange.Custom;
+                }}
+                placeholder={searchLabel}
+            />
+        </InputBox>
+    {/if}
 
     <InputBox>
         <label>

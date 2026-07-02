@@ -24,3 +24,5 @@ ts/.svelte-kit
 docs/_build/
 docs/autoapi/
 .complexipy_cache
+# Locally imported prep-book content (copyrighted — never commit)
+tools/speedrun/deck/imported/

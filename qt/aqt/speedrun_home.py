@@ -58,14 +58,12 @@ def _find_speedrun_deck_id(mw: aqt.main.AnkiQt) -> int:
     if not mw.col:
         return 1
     try:
-        deck = mw.col.decks.get_current()
-        # Prefer a deck whose name starts with the Speedrun name
+        # Prefer a deck whose name starts with the Speedrun name.
         for d in mw.col.decks.all_names_and_ids():
             if d.name.startswith(_SPEEDRUN_DECK_NAME):
                 return int(d.id)
-        # Fallback: whatever is current
-        if deck:
-            return int(deck["id"])
+        # Fallback: whatever deck is current.
+        return int(mw.col.decks.get_current_id())
     except Exception:
         pass
     return 1

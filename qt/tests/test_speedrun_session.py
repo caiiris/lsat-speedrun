@@ -186,9 +186,15 @@ class TestBuildProgressHeader:
         html = _build_progress_header(1, 25, "Timed section", "timed")
         assert "setInterval" in html
 
-    def test_non_timed_no_timer_script(self) -> None:
+    def test_non_timed_also_has_live_ticker(self) -> None:
+        # The elapsed clock now ticks live in all modes (was static/frozen).
         html = _build_progress_header(1, 10, "Drill", "targeted")
-        assert "setInterval" not in html
+        assert "setInterval" in html
+
+    def test_clock_seeded_with_elapsed_offset(self) -> None:
+        # Continuous across renders: JS start is offset by elapsed (ms).
+        html = _build_progress_header(3, 10, "Drill", "targeted", elapsed_seconds=46.0)
+        assert "Date.now() - 46000" in html
 
 
 # ---------------------------------------------------------------------------
@@ -210,6 +216,37 @@ class TestSessionSizes:
 # ---------------------------------------------------------------------------
 # _build_result_html
 # ---------------------------------------------------------------------------
+
+
+class TestAssembleCardIdsTargetedRepeat:
+    """B036 fix: a targeted drill re-serves the single focus skill card N times."""
+
+    class _FakeCol:
+        def __init__(self, matched: list[int]) -> None:
+            self._matched = matched
+
+        def find_cards(self, query: str) -> list[int]:
+            # Only the IdentityTag-filtered search is exercised in these tests.
+            return self._matched
+
+    class _FakeMw:
+        def __init__(self, col: object) -> None:
+            self.col = col
+
+    def _assemble(self, matched: list[int], focus: str):
+        mw = self._FakeMw(self._FakeCol(matched))
+        return _session._assemble_card_ids(mw, 1, "targeted", focus)  # type: ignore[attr-defined]
+
+    def test_single_skill_card_fills_session(self) -> None:
+        # One matching skill card → repeated up to the targeted session size.
+        ids = self._assemble([101], "type::flaw")
+        assert ids == [101] * SESSION_SIZES["targeted"]
+        assert len(ids) == 10  # was 1 before the fix
+
+    def test_multiple_matches_cycle(self) -> None:
+        ids = self._assemble([101, 102], "type::principle")
+        assert len(ids) == SESSION_SIZES["targeted"]
+        assert ids[:4] == [101, 102, 101, 102]
 
 
 class TestBuildResultHtml:

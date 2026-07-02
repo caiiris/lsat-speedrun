@@ -207,25 +207,30 @@ def _assemble_card_ids(
     if col is None:
         return []
 
+    limit = SESSION_SIZES.get(mode, 10)
+
     try:
         if mode == "targeted" and focus_skill:
-            # Search for skill cards in the deck whose IdentityTag matches
-            # the focus skill.  The field search is case-insensitive.
+            # Search for the skill card(s) whose IdentityTag matches the focus
+            # skill.  There is exactly ONE LSAT Skill card per skill (data
+            # contract: 38 skill notes), so this normally matches a single card.
             search = f'deck:"{_SPEEDRUN_DECK_NAME}" note:"{LSAT_SKILL_NOTETYPE}" IdentityTag:"{focus_skill}"'
-            card_ids = list(col.find_cards(search))
-            if not card_ids:
-                # Fallback: all skill cards in the deck (unfiltered)
-                search = f'deck:"{_SPEEDRUN_DECK_NAME}" note:"{LSAT_SKILL_NOTETYPE}"'
-                card_ids = list(col.find_cards(search))
-        else:
-            search = f'deck:"{_SPEEDRUN_DECK_NAME}" note:"{LSAT_SKILL_NOTETYPE}"'
-            card_ids = list(col.find_cards(search))
+            matched = list(col.find_cards(search))
+            if matched:
+                # B036 fix: a targeted drill reviews that skill card `limit`
+                # times, drawing a FRESH item each rep (the *skill* is the FSRS
+                # unit — D-SR3 — not the item).  Previously we returned the
+                # distinct matched cards, so a single-skill drill was only one
+                # question long.  If the focus resolved to several cards (a
+                # subtype), cycle through them to fill the session.
+                return [matched[i % len(matched)] for i in range(limit)]
+            # No exact IdentityTag match — fall through to unfiltered skill cards.
 
-        # Sort by due (ascending): most overdue first, giving FSRS-like ordering
-        # without going through the full scheduler queue.  For mixed/timed this
-        # approximates the scheduler order; for timed the FSRS queue would be more
-        # accurate but requires calling get_queued_cards() N times upfront which
-        # would modify scheduler state.
+        # mixed / timed (or targeted fallback): distinct skill cards, ordered by
+        # due (most overdue first), which approximates the FSRS queue order
+        # without mutating scheduler state.
+        search = f'deck:"{_SPEEDRUN_DECK_NAME}" note:"{LSAT_SKILL_NOTETYPE}"'
+        card_ids = list(col.find_cards(search))
         if card_ids:
             rows = col.db.all(
                 "SELECT id, due FROM cards WHERE id IN ({}) ORDER BY due ASC".format(
@@ -233,8 +238,6 @@ def _assemble_card_ids(
                 )
             )
             card_ids = [r[0] for r in rows]
-
-        limit = SESSION_SIZES.get(mode, 10)
         return card_ids[:limit]
 
     except Exception as exc:
@@ -255,39 +258,42 @@ def _build_progress_header(
     elapsed_seconds: float = 0.0,
     timed_timer_id: str = "sr-timer",
 ) -> str:
-    """Thin top bar: 'Label  ·  Q X of N  [timer]'.
+    """Thin top bar: 'Label  ·  Q X of N  [live elapsed clock]'.
 
-    For timed mode a JS countdown timer is injected and updates every second.
-    elapsed_seconds is used to display elapsed time on the result screen.
+    The elapsed clock ticks live (JS, every second) in *all* modes.  It is
+    seeded with ``elapsed_seconds`` as an offset so the clock stays **continuous
+    across page transitions** (prephrase → choices → reveal → next question)
+    rather than resetting or freezing on each render.  Timed mode renders it
+    prominently (amber/bold); other modes render it muted.
     """
-    elapsed_str = _format_elapsed(elapsed_seconds) if elapsed_seconds > 0 else ""
-
     progress_pct = int((current / max(total, 1)) * 100)
 
-    timer_html = ""
-    if mode == "timed":
-        timer_html = (
-            f'<span id="{timed_timer_id}" style="font-family:monospace;font-size:0.9em;'
-            f'color:{_C_AMBER};font-weight:700;margin-left:auto;"></span>'
-            f"<script>\n"
-            f"(function(){{\n"
-            f"  var start = Date.now();\n"
-            f"  var el = document.getElementById('{timed_timer_id}');\n"
-            f"  function tick(){{\n"
-            f"    var s = Math.floor((Date.now()-start)/1000);\n"
-            f"    var m = Math.floor(s/60); var ss = s%60;\n"
-            f"    if(el) el.textContent = m+':'+(ss<10?'0':'')+ss+' elapsed';\n"
-            f"  }}\n"
-            f"  setInterval(tick, 1000);\n"
-            f"  tick();\n"
-            f"}})();\n"
-            f"</script>\n"
-        )
-    elif elapsed_str:
-        timer_html = (
-            f'<span style="font-family:monospace;font-size:0.85em;color:#888;'
-            f'margin-left:auto;">{_esc(elapsed_str)}</span>'
-        )
+    # Offset (ms) so the JS clock resumes from the session's elapsed time on
+    # each fresh render instead of restarting at 0.
+    offset_ms = int(max(elapsed_seconds, 0.0) * 1000)
+    is_timed = mode == "timed"
+    timer_color = _C_AMBER if is_timed else "#888"
+    timer_weight = "700" if is_timed else "400"
+    timer_size = "0.9em" if is_timed else "0.85em"
+
+    timer_html = (
+        f'<span id="{timed_timer_id}" style="font-family:monospace;'
+        f'font-size:{timer_size};color:{timer_color};font-weight:{timer_weight};'
+        f'margin-left:auto;"></span>'
+        f"<script>\n"
+        f"(function(){{\n"
+        f"  var start = Date.now() - {offset_ms};\n"
+        f"  var el = document.getElementById('{timed_timer_id}');\n"
+        f"  function tick(){{\n"
+        f"    var s = Math.floor((Date.now()-start)/1000);\n"
+        f"    var m = Math.floor(s/60); var ss = s%60;\n"
+        f"    if(el) el.textContent = m+':'+(ss<10?'0':'')+ss+' elapsed';\n"
+        f"  }}\n"
+        f"  setInterval(tick, 1000);\n"
+        f"  tick();\n"
+        f"}})();\n"
+        f"</script>\n"
+    )
 
     return (
         f'<div style="display:flex;align-items:center;gap:12px;'
@@ -742,6 +748,9 @@ class SpeedrunSessionDialog(QDialog):
         try:
             from anki.cards import Card
             state.current_card = self.mw.col.get_card(card_id)
+            # Start the card timer so answer_card()'s time_taken() is valid.
+            # (Without this, time_taken() reads an unset timer_started.)
+            state.current_card.start_timer()
         except Exception as exc:
             print(f"[Speedrun WP-22] get_card({card_id}) failed: {exc}")
             self._advance_to_next()
@@ -795,32 +804,28 @@ class SpeedrunSessionDialog(QDialog):
             return None
 
     def _fetch_v3_states(self, card_id: int) -> None:
-        """Fetch V3 scheduling states for the card so we can build an answer.
+        """Fetch V3 scheduling states for *this specific* card.
 
-        Calls get_queued_cards() which returns the scheduler's top card.
-        If the top card matches our target, we store the states.
-        Otherwise we store None and will use a fallback rating path.
+        B036 fix: uses ``get_scheduling_states(card_id)`` (the same backend
+        path the legacy ``answerCard`` uses) so the states are valid regardless
+        of the card's position in the scheduler queue.  Previously we relied on
+        ``get_queued_cards()`` returning our card as the queue top; when it
+        didn't (card not due, or the same skill card reviewed repeatedly in a
+        targeted drill), ``v3_states`` was effectively unusable and the answer
+        was silently dropped — so nothing reached the revlog and Performance
+        never accrued.  Fetching per-card guarantees every answer is recorded.
         """
         from anki.scheduler.v3 import Scheduler as V3Scheduler
 
         sched = self.mw.col.sched
         if not isinstance(sched, V3Scheduler):
+            self._state.v3_states = None
             return
         try:
-            output = sched.get_queued_cards()
-            if output.cards:
-                top = output.cards[0]
-                if top.card.id == card_id:
-                    self._state.v3_states = top.states
-                else:
-                    # Queue top doesn't match; still store states — the answer
-                    # will be built against the queue's top card, not ours.
-                    # This is a known limitation for pre-fetched sessions
-                    # (documented in WP-22-log L4).  For now store anyway so
-                    # the scheduler isn't called a second time.
-                    self._state.v3_states = top.states
+            self._state.v3_states = self.mw.col._backend.get_scheduling_states(card_id)
         except Exception as exc:
-            print(f"[Speedrun WP-22] get_queued_cards failed: {exc}")
+            print(f"[Speedrun WP-22] get_scheduling_states({card_id}) failed: {exc}")
+            self._state.v3_states = None
 
     # ------------------------------------------------------------------
     # Drill rendering

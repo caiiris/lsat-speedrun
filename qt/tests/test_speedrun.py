@@ -193,6 +193,24 @@ class TestBuildItemQuestionHtml:
         assert "Correct:" not in html
         assert "WhyWrong" not in html
 
+    def test_question_type_and_skill_hidden_precommit(self) -> None:
+        # Identifying the question type from the stem is part of the task, so the
+        # taxonomy tags must not be shown before the learner commits.
+        fields = _make_item_fields()
+        html = build_item_question_html(fields)
+        assert fields["TypeTag"] not in html   # e.g. "type::inference"
+        assert fields["SkillTag"] not in html  # e.g. "skill::conditional"
+
+    def test_type_shown_human_readable_on_reveal(self) -> None:
+        # Reveal gives post-answer feedback in plain English ("WHAT THIS TESTED"),
+        # NOT the raw `type::inference` / `skill::conditional` code tags.
+        fields = _make_item_fields(correct="B")
+        html = build_item_answer_html(fields, "B")
+        assert "WHAT THIS TESTED" in html
+        assert "Inference" in html               # humanized type::inference
+        assert fields["TypeTag"] not in html     # no raw "type::inference"
+        assert fields["SkillTag"] not in html    # no raw "skill::conditional"
+
 
 # ---------------------------------------------------------------------------
 # build_item_answer_html — the core commit-then-reveal invariant
@@ -209,6 +227,27 @@ class TestBuildItemAnswerHtml:
         fields = _make_item_fields(correct="B")
         html = build_item_answer_html(fields, "A")
         assert "Wrong" in html
+
+    def test_trap_carries_plain_language_gloss(self) -> None:
+        # A bare slug like "Correlation ≠ causation" now comes with a gloss.
+        fields = _make_item_fields(correct="B")
+        html = build_item_answer_html(fields, "A")  # A is a trap choice
+        assert "Trap category" in html
+        assert "occur together" in html  # gloss for trap::correlation-causation
+
+    def test_no_selfcheck_yesno_when_wrong(self) -> None:
+        # Missed the item: don't ask "did your prediction match?" — prompt reflection.
+        fields = _make_item_fields(correct="B")
+        html = build_item_answer_html(fields, "A", prephrase_text="connect premise to conclusion")
+        assert "Did your prediction match" not in html
+        assert "srSelfCheck" not in html
+        assert "where did your reasoning diverge" in html
+
+    def test_selfcheck_yesno_when_correct(self) -> None:
+        fields = _make_item_fields(correct="B")
+        html = build_item_answer_html(fields, "B", prephrase_text="connect premise to conclusion")
+        assert "Did your prediction match" in html
+        assert "srSelfCheck" in html
 
     def test_answer_contains_correct_key(self) -> None:
         fields = _make_item_fields(correct="C")

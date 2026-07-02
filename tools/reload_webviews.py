@@ -13,7 +13,9 @@ import sys
 import PyChromeDevTools  # type: ignore[import]
 
 DEFAULT_HOST = "localhost"
-DEFAULT_PORT = 8080
+# Speedrun: 9222, matching the debugger port in `run` (8080 is used by
+# the self-hosted anki-sync-server). See docs/speedrun/decisions.md.
+DEFAULT_PORT = 9222
 
 
 def print_error(message: str):

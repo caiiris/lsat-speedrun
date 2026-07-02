@@ -5,14 +5,14 @@ build_seed_deck.py — Speedrun WP-1 seed deck builder.
 
 Creates the three Speedrun notetypes and populates the collection with:
   - LSAT Skill notes (one per taxonomy skill/trap — 38 total)
-  - LSAT Item notes  (synthetic placeholders from sample_items.json, suspended)
+  - LSAT Item notes  (synthetic pool from deck/items/*.json, suspended)
   - LSAT Meta notes  (seed vocab/flaw/indicator cards)
 
 All real LSAT items must come from official sources (D-SR11, F.2).
 Synthetic placeholders are clearly labeled with SyntheticFlag = "SYNTHETIC".
 
 Usage:
-    python build_seed_deck.py --col /path/to/output.anki2 [--items /path/to/sample_items.json]
+    python build_seed_deck.py --col /path/to/output.anki2 [--items /path/to/items_dir_or_file]
     python build_seed_deck.py --col :temp:  # creates a temp file, prints path
 
 The --col argument is a path to an .anki2 collection file.  Use ":temp:" to
@@ -32,6 +32,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from items_loader import ITEMS_DIR, load_items, merge_item_pools
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -40,7 +42,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = REPO_ROOT / "docs" / "speedrun" / "data"
 TAXONOMY_JSON = DATA_DIR / "taxonomy.json"
 WEIGHTS_JSON = DATA_DIR / "weights.json"
-DEFAULT_ITEMS_JSON = Path(__file__).parent / "sample_items.json"
+# The item pool lives as per-type files under deck/items/ (loaded + merged by
+# items_loader). A single JSON file with a top-level "items" array also works.
+DEFAULT_ITEMS_JSON = ITEMS_DIR
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -387,6 +391,7 @@ _SEED_META_NOTES: list[dict[str, str]] = [
 def build_seed_deck(
     col_path: str,
     items_json_path: str | Path = DEFAULT_ITEMS_JSON,
+    import_paths: list[str | Path] | None = None,
     min_pool_size: int = MIN_POOL_SIZE_SEED,
     verbose: bool = True,
 ) -> CoverageReport:
@@ -411,12 +416,20 @@ def build_seed_deck(
     if not TAXONOMY_JSON.exists():
         raise FileNotFoundError(f"taxonomy.json not found: {TAXONOMY_JSON}")
     if not Path(items_json_path).exists():
-        raise FileNotFoundError(f"items JSON not found: {items_json_path}")
+        raise FileNotFoundError(f"items path not found: {items_json_path}")
 
     taxonomy = _load_taxonomy()
 
-    with open(items_json_path, encoding="utf-8") as f:
-        items_data = json.load(f)
+    # Base pool (synthetic, committed) plus optional local imports (gitignored).
+    if import_paths:
+        items_data = merge_item_pools(items_json_path, *import_paths)
+        if verbose:
+            n_real = sum(1 for it in items_data["items"] if it.get("SyntheticFlag") == "REAL")
+            n_synth = len(items_data["items"]) - n_real
+            print(f"  Item pool: {n_synth} synthetic + {n_real} imported (REAL) "
+                  f"= {len(items_data['items'])} total.")
+    else:
+        items_data = load_items(items_json_path)
 
     col = Collection(col_path)
     try:
@@ -493,11 +506,21 @@ def _populate_collection(
     items = items_data.get("items", [])
     added_items = 0
     for item_dict in items:
-        # Guard: reject items missing SyntheticFlag or with SyntheticFlag != SYNTHETIC
-        if item_dict.get("SyntheticFlag") != "SYNTHETIC":
+        flag = item_dict.get("SyntheticFlag")
+        if flag == "SYNTHETIC":
+            synth_tag = "synthetic::true"
+        elif flag == "REAL":
+            source = str(item_dict.get("Source", ""))
+            if len(source) < 40:
+                raise ValueError(
+                    f"Item {item_dict.get('_id', '?')} has SyntheticFlag=REAL but "
+                    "Source citation is too short (need book/ISBN/question id)."
+                )
+            synth_tag = "synthetic::real"
+        else:
             raise ValueError(
-                f"Item {item_dict.get('_id', '?')} is missing SyntheticFlag=SYNTHETIC. "
-                "Real LSAT items must not be included in the seed deck (D-SR11)."
+                f"Item {item_dict.get('_id', '?')} must have SyntheticFlag "
+                "'SYNTHETIC' or 'REAL' (D-SR11)."
             )
         note = col.new_note(nt_item)
         for fname in [f["name"] for f in nt_item["flds"]]:
@@ -508,7 +531,7 @@ def _populate_collection(
         for tag_field in ("TypeTag", "SkillTag", "TrapTag"):
             raw = item_dict.get(tag_field, "")
             tags.extend(t for t in raw.split() if t)
-        tags.append("synthetic::true")
+        tags.append(synth_tag)
         note.tags = tags
 
         col.add_note(note, items_did)
@@ -577,7 +600,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--items",
         default=str(DEFAULT_ITEMS_JSON),
-        help="Path to sample_items.json (default: tools/speedrun/deck/sample_items.json).",
+        help="Path to the items/ dir (default) or a single items JSON file.",
+    )
+    parser.add_argument(
+        "--import",
+        dest="import_paths",
+        action="append",
+        default=[],
+        metavar="DIR",
+        help="Merge a local imported item dir (repeatable). Gitignored prep-book "
+        "output from import_prep_book.py; never committed to the repo.",
     )
     parser.add_argument(
         "--min-pool",
@@ -599,6 +631,7 @@ def main(argv: list[str] | None = None) -> int:
         report = build_seed_deck(
             col_path=col_path,
             items_json_path=args.items,
+            import_paths=args.import_paths or None,
             min_pool_size=args.min_pool,
         )
     except ImportError as e:
